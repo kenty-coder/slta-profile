@@ -1,0 +1,1595 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="author" content="KENTA SHINKAWA">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>SLTA プロフィールグラフ作成ツール</title>
+<style>
+  :root{--bg:#f7f7f5;--card:#fff;--ink:#1f2937;--sub:#6b7280;--line:#e5e7eb;--focus:#2563eb;
+    --c1:#2563eb;--c2:#dc2626;--c3:#16a34a;--c4:#9333ea;--c5:#c2410c;
+    --ok6:#0f766e;--ok5:#5fb8ad;--ng4:#fde7c8;--ng3:#fbc98e;--ng2:#f59f5b;--ng1:#d9622b;}
+  *{box-sizing:border-box}
+  html,body{max-width:100%}
+  body{margin:0;font-family:"Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif;background:var(--bg);color:var(--ink);font-size:14px}
+  header{padding:18px 20px 6px;max-width:1260px;margin:0 auto}
+  h1{font-size:20px;margin:0 0 4px}
+  h3{font-size:13px;margin:14px 0 6px}
+  .lead{color:var(--sub);margin:0}
+  main{padding:10px 20px 40px;max-width:1260px;margin:0 auto}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px;min-width:0}
+  details.card>summary{cursor:pointer;font-weight:700;list-style:revert}
+  details.card>summary .note{font-weight:400;margin-left:8px}
+  details.card[open]>summary{margin-bottom:10px}
+  .row{display:flex;flex-wrap:wrap;gap:12px;align-items:end}
+  label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--sub)}
+  input[type=text],input[type=date],input[type=time],select{font:inherit;padding:7px 9px;border:1px solid #d1d5db;border-radius:8px;min-width:150px;background:#fff;color:var(--ink)}
+  input[type=time]{min-width:110px}
+  select:focus{outline:2px solid var(--focus);outline-offset:1px;border-color:var(--focus)}
+  .patrow{margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+  .patrow label.f{flex:1 1 260px;max-width:420px}
+  .patrow select{width:100%}
+  button{font:inherit;padding:8px 14px;border-radius:8px;border:1px solid #d1d5db;background:#fff;color:var(--ink);cursor:pointer}
+  button.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+  button.warn{color:#b91c1c;border-color:#fca5a5}
+  button.mini{padding:3px 8px;font-size:12px;border-radius:6px}
+  button:hover{filter:brightness(.96)}
+  input:focus,textarea:focus,button:focus-visible{outline:2px solid var(--focus);outline-offset:1px;border-color:var(--focus)}
+  .toolbar{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);gap:18px;align-items:center}
+  .btngroup{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .glabel{font-size:11px;color:var(--sub);margin-right:2px}
+  table{border-collapse:collapse;width:100%}
+  th,td{border-bottom:1px solid var(--line);padding:5px 6px;text-align:center}
+  th{font-size:12px;color:var(--sub);font-weight:600;background:#fafafa}
+  #tbl th{position:sticky;top:0;z-index:1}
+  td.name{text-align:left;white-space:nowrap}
+  td.grp{font-weight:700;writing-mode:vertical-rl;letter-spacing:.2em;background:#fafafa;width:28px}
+  tr.filled td.name{font-weight:600}
+  input.mx{width:48px;font:inherit;text-align:center;padding:4px;border:1px dashed #d1d5db;border-radius:6px;color:var(--sub);background:#fff}
+  input.mx:disabled{background:transparent;border-color:transparent}
+  input.num{width:56px;font:inherit;text-align:center;padding:5px 4px;border:1px solid #d1d5db;border-radius:6px;background:#fff;color:var(--ink)}
+  input.num[readonly]{background:#f3f4f6;color:#374151;border-style:dashed}
+  input.bad,input.mx.bad{border-color:#dc2626!important;border-style:solid;background:#fef2f2;color:#b91c1c}
+  .tablewrap{overflow:auto;max-width:100%}
+  .note{font-size:12px;color:var(--sub);line-height:1.7}
+  .sm{font-size:11px;color:var(--sub)}
+  .muted{color:#9ca3af}
+
+  /* 評価の切り替えタブ */
+  .tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+  .tab{border-radius:20px;padding:6px 14px;font-size:13px}
+  .tab.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:middle;flex:none}
+  /* 評価ごとの印（グラフの点と同じ形：●■▲◆○） */
+  .e1 .dot{background:var(--c1)}
+  .e2 .dot{background:var(--c2);border-radius:0;width:9px;height:9px}
+  .e3 .dot{background:var(--c3);border-radius:0;clip-path:polygon(50% 0,100% 100%,0 100%);width:11px;height:10px}
+  .e4 .dot{background:var(--c4);border-radius:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);width:11px;height:12px}
+  .e5 .dot{background:#fff;border:2.5px solid var(--c5)}
+  .legend{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;font-size:12px;color:var(--sub);margin-bottom:8px}
+  .legend .cell{cursor:default;width:22px;height:22px;font-size:12px}
+
+  /* 1問ずつのマス */
+  .cells{display:grid;gap:3px;justify-content:start}
+  button.cell{width:26px;height:28px;padding:0;border:1px solid #cbd5e1;border-radius:4px;background:#fff;color:#111;
+    font:600 13px/1 Consolas,"Courier New",monospace;position:relative;cursor:pointer}
+  button.cell:focus{outline:2px solid var(--focus);outline-offset:1px;z-index:2}
+  .cell.s6{background:var(--ok6);border-color:var(--ok6);color:#fff}
+  .cell.s5{background:var(--ok5);border-color:var(--ok5);color:#fff}
+  .cell.s4{background:var(--ng4);border-color:#f2c894;color:#7c2d12}
+  .cell.s3{background:var(--ng3);border-color:#eeac63;color:#7c2d12}
+  .cell.s2{background:var(--ng2);border-color:#e58a40;color:#fff}
+  .cell.s1{background:var(--ng1);border-color:#c2521f;color:#fff}
+  .cell.sx{background:repeating-linear-gradient(45deg,#d1d5db 0 2px,#f3f4f6 2px 6px);color:#4b5563;border-color:#9ca3af;font-size:11px}
+  .cell.over{box-shadow:0 0 0 2px #dc2626}
+  .cell.nt::after{content:"";position:absolute;top:1px;right:1px;width:6px;height:6px;border-radius:50%;background:#7c3aed;border:1px solid #fff}
+  .stgname{font-size:11px;color:var(--sub);margin-left:6px;vertical-align:middle}
+  td.in{text-align:left}
+  .hashbox{font-size:12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .hashbox.err{color:#b91c1c}
+  .calc{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;font-size:12px;color:var(--sub)}
+  .calc input.num{width:42px}
+  td.res{text-align:left;font-size:12px;line-height:1.45;min-width:150px}
+  td.res .err{color:#b91c1c}
+  .cnts{font-family:Consolas,"Courier New",monospace;font-size:11px;color:#4b5563;white-space:nowrap}
+  .cnts b{color:#111}
+  .etypes{font-size:11px;color:#6d28d9}
+  td.oth{text-align:left;font-size:11.5px;line-height:1.5;color:#374151;white-space:nowrap}
+  .up{color:#15803d;font-weight:700}.down{color:#b91c1c;font-weight:700}.same{color:#6b7280}
+
+  /* 小さな選択肢 */
+  #picker{position:absolute;z-index:8;background:#fff;border:1px solid #d1d5db;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.18);padding:6px;display:none;max-width:calc(100vw - 16px)}
+  #picker.on{display:block}
+  #picker .pk-cap{font-size:11px;color:var(--sub);margin:0 2px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #picker .pk-row{display:flex;flex-wrap:wrap;gap:4px}
+  #picker button{min-width:36px;height:38px;padding:0 6px;font-size:14px;line-height:1.05;border-radius:7px}
+  #picker button small{display:block;font-size:8.5px;color:inherit;opacity:.85}
+  #picker button.s6{background:var(--ok6);color:#fff;border-color:var(--ok6)}
+  #picker button.s5{background:var(--ok5);color:#fff;border-color:var(--ok5)}
+  #picker button.s4{background:var(--ng4);color:#7c2d12}
+  #picker button.s3{background:var(--ng3);color:#7c2d12}
+  #picker button.s2{background:var(--ng2);color:#fff}
+  #picker button.s1{background:var(--ng1);color:#fff}
+
+  #chart svg{display:block;width:100%;height:auto}
+  .chartbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px;font-size:12px;color:var(--sub)}
+  .sumtbl th,.sumtbl td{font-size:12.5px}
+  .sumtbl td:first-child{text-align:left;white-space:nowrap}
+  .infogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px 12px}
+  .infogrid label.f input,.infogrid label.f select{min-width:0;width:100%}
+  .infogrid .wide{grid-column:1/-1}
+  .out{font-size:13px;color:var(--ink);padding:7px 0}
+  .examtbl td,.examtbl th{font-size:12px;white-space:nowrap}
+  .examtbl input{min-width:0}
+  .examtbl input[type=text]{width:120px}
+  .settbl input{width:70px;min-width:0;padding:4px 6px}
+  .settbl td,.settbl th{font-size:12px}
+  .settbl td:nth-child(2){text-align:left}
+  .normimp{border:1px dashed #cbd5e1;border-radius:10px;padding:10px;margin:8px 0 12px;background:#fafafa}
+  .normimp textarea{min-height:90px}
+  label.filebtn{display:inline-flex;align-items:center;gap:4px;border:1px solid #d1d5db;background:#fff;cursor:pointer;padding:3px 8px;border-radius:6px;font-size:12px;color:var(--ink)}
+  label.filebtn input{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
+  label.filebtn:focus-within{outline:2px solid var(--focus);outline-offset:1px}
+  #normPrevBody td.chg{font-weight:700}
+  #normPrevBody tr.skip td{color:#9ca3af}
+  #normPrevBody tr.err td{color:#b91c1c}
+  .stnames{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+  .stnames input{min-width:0;width:100%}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:8px 16px;border-radius:20px;font-size:13px;opacity:0;transition:.3s;pointer-events:none;z-index:20;max-width:90vw;text-align:center}
+  .toast.on{opacity:1}
+  textarea{width:100%;min-height:80px;font:12px monospace;border:1px solid #d1d5db;border-radius:8px;padding:8px}
+  textarea.plain{font:inherit;min-height:60px}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:9}
+  .modal.on{display:flex}
+  .modal .box{background:#fff;border-radius:12px;padding:18px;width:min(560px,92vw);max-height:92vh;overflow:auto}
+  .chk{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;margin:6px 0}
+  .chk label{display:flex;gap:4px;align-items:center;white-space:nowrap}
+  footer{text-align:center;color:var(--sub);font-size:11px;padding:10px 0 24px}
+  .printonly,#blankSheet,#printDetail{display:none}
+
+  /* スマホ・タブレット */
+  @media (max-width:700px){
+    header{padding:14px 16px 4px}
+    h1{font-size:18px}
+    main{padding:8px 10px 32px}
+    .card{padding:12px}
+    label.f{flex:1 1 140px}
+    input[type=text],input[type=date],input[type=time],select{min-width:0;width:100%;min-height:42px;font-size:16px}
+    .patrow label.f{flex:1 1 100%;max-width:none}
+    button{min-height:44px;font-size:15px;padding:8px 12px}
+    button.cell{min-height:0;width:30px;height:32px;font-size:15px;padding:0}
+    button.mini{min-height:32px;font-size:13px;padding:3px 8px}
+    #picker button{min-width:40px;height:44px;min-height:44px}
+    .btngroup{width:100%}
+    .btngroup button{flex:1 1 auto}
+    .glabel{width:100%}
+    #chart{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    #chart svg{min-width:760px}
+    .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    #tbl{min-width:820px}
+    input.num{width:52px;min-height:40px;font-size:16px}
+    input.mx{width:48px;min-height:40px;font-size:16px}
+    .examtbl input[type=text],.examtbl input[type=time],.examtbl input[type=date]{width:auto;min-width:110px}
+    textarea{font-size:16px}
+  }
+
+  /* 印刷（A4横） */
+  @page{size:A4 landscape;margin:8mm}
+  @media print{
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    body{background:#fff;font-size:8pt}
+    header,#topCard,#infoCard,#inputCard,#setCard,.note,.toast,.modal,#picker,.chartbar,.noprint{display:none!important}
+    .printonly{display:block}
+    #printHead{display:block;border-bottom:1px solid #9ca3af;padding-bottom:1.5mm;margin-bottom:2.5mm;font-size:8.5pt}
+    #printHead .ph1{display:flex;flex-wrap:wrap;align-items:baseline;gap:1mm 6mm}
+    #printHead .ph-title{font-size:12pt;font-weight:700}
+    #printHead .ph-printed{margin-left:auto;font-size:7.5pt;color:#6b7280}
+    #printHead .ph2{font-size:7.5pt;color:#374151;margin-top:1mm}
+    main{max-width:none;padding:0;margin:0;display:grid;grid-template-columns:1fr 94mm;gap:4mm;align-items:start}
+    #sumCard .tablewrap{overflow:visible}
+    .sumtbl{table-layout:auto}
+    .sumtbl th,.sumtbl td{padding:.4mm .5mm}
+    .sumtbl td:first-child{white-space:normal;min-width:13mm}
+    .sumtbl .sm{font-size:6pt}
+    .card{border:none;border-radius:0;padding:0;margin:0;break-inside:avoid;page-break-inside:avoid}
+    #chart svg{min-width:0}
+    th,td{padding:.5mm 1mm;font-size:7.5pt;line-height:1.25;border-bottom:.2mm solid #d1d5db}
+    th{background:#f3f4f6;color:#374151;font-size:7pt}
+    .sumtbl th,.sumtbl td{font-size:6.5pt}
+    #sumCard h3{font-size:9pt;margin:0 0 1.5mm}
+    #printDetail{display:block;break-before:page;page-break-before:always}
+    #printDetail h3{font-size:9pt;margin:2mm 0 1mm}
+    #printDetail section{break-inside:auto}
+    #printDetail table{margin-bottom:2mm}
+    #printDetail td{font-size:7pt;text-align:left;vertical-align:top}
+    .mc{display:inline-block;width:3.8mm;height:3.8mm;line-height:3.6mm;text-align:center;border:.2mm solid #9ca3af;font:6.5pt Consolas,monospace;margin:0 .3mm .3mm 0;vertical-align:middle}
+    .mc.s6{background:var(--ok6);color:#fff}.mc.s5{background:var(--ok5);color:#fff}
+    .mc.s4{background:var(--ng4)}.mc.s3{background:var(--ng3)}.mc.s2{background:var(--ng2);color:#fff}.mc.s1{background:var(--ng1);color:#fff}
+    .mc.sx{background:#e5e7eb;color:#4b5563}
+    footer{padding:2mm 0 0;font-size:7pt}
+    /* 白紙の記録用紙 */
+    body.blank header,body.blank main,body.blank #printHead,body.blank #printDetail{display:none!important}
+    body.blank #blankSheet{display:block}
+    #blankSheet h2{font-size:12pt;margin:0 0 2mm}
+    #blankSheet .bs-info{width:100%;border-collapse:collapse;margin-bottom:2mm;table-layout:fixed}
+    #blankSheet .bs-info td{border:.25mm solid #9ca3af;height:6.5mm;font-size:7.5pt;text-align:left;padding:.5mm 1.2mm;vertical-align:top}
+    #blankSheet .bs-info td.k{background:#f3f4f6;width:20mm;white-space:nowrap}
+    #blankSheet .bs-main td,#blankSheet .bs-main th{border:.25mm solid #9ca3af;font-size:7.5pt;padding:.6mm 1mm;vertical-align:middle}
+    #blankSheet .bs-main td.l{text-align:left;white-space:nowrap}
+    #blankSheet .bs-main tr{break-inside:avoid}
+    #blankSheet .bx{display:inline-block;width:5.2mm;height:5.2mm;border:.25mm solid #6b7280;margin:0 .5mm .5mm 0;vertical-align:middle}
+    #blankSheet .bxs{display:inline-grid;grid-template-columns:repeat(10,auto)}
+    #blankSheet .memo{width:70mm}
+    #blankSheet .bs-leg{font-size:7pt;color:#374151;margin:0 0 1.5mm}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>標準失語症検査（SLTA）採点入力・プロフィールグラフ</h1>
+  <p class="lead">1問ずつ段階（6〜1）をマスに打ち込むと、正答数・正答率・段階別件数を数えてプロフィールを描きます。評価は第1回〜第5回の5回分まで重ねて比較できます。</p>
+</header>
+<div id="printHead" class="printonly">
+  <div class="ph1">
+    <span class="ph-title">SLTA プロフィール</span>
+    <span>対象者：<b id="phName"></b></span>
+    <span id="phInfo"></span>
+    <span class="ph-printed">印刷日：<span id="phPrinted"></span>　作成：KENTA SHINKAWA</span>
+  </div>
+  <div class="ph2" id="phDates"></div>
+</div>
+<main>
+  <div class="card" id="topCard">
+    <div class="row patrow">
+      <label class="f">対象者の切り替え<select id="psel" aria-label="対象者を選ぶ"></select></label>
+      <div class="btngroup">
+        <button id="btnNew">＋ 新しい対象者</button>
+        <button id="btnDel" class="warn">この対象者を削除</button>
+      </div>
+    </div>
+    <div class="row">
+      <label class="f">氏名またはID（イニシャル・ID推奨）<input type="text" id="pname" placeholder="例：A.T"></label>
+      <label class="f e1"><span><span class="dot"></span>評価1 の検査日</span><input type="date" id="d0" class="dt" data-e="0"></label>
+      <label class="f e2"><span><span class="dot"></span>評価2 の検査日</span><input type="date" id="d1" class="dt" data-e="1"></label>
+      <label class="f e3"><span><span class="dot"></span>評価3 の検査日</span><input type="date" id="d2" class="dt" data-e="2"></label>
+      <label class="f e4"><span><span class="dot"></span>評価4 の検査日</span><input type="date" id="d3" class="dt" data-e="3"></label>
+      <label class="f e5"><span><span class="dot"></span>評価5 の検査日</span><input type="date" id="d4" class="dt" data-e="4"></label>
+    </div>
+    <div class="row toolbar">
+      <div class="btngroup">
+        <span class="glabel">保存・印刷</span>
+        <button id="btnPrint" class="primary">印刷する</button>
+        <button id="btnBlank">白紙の記録用紙を印刷</button>
+        <button id="btnPng">グラフを画像で保存</button>
+        <button id="btnCsv">CSVで保存</button>
+      </div>
+      <div class="btngroup">
+        <span class="glabel">データ</span>
+        <button id="btnCopy">データをコピー</button>
+        <button id="btnCopyAll">全員分をコピー</button>
+        <button id="btnLoad">データを読み込む</button>
+        <button id="btnClear" class="warn">クリア</button>
+      </div>
+    </div>
+  </div>
+
+  <details class="card" id="infoCard">
+    <summary>患者情報・検査情報<span class="note" id="infoSum"></span></summary>
+    <p class="note">氏名欄（上）には実名ではなくイニシャルやIDを入れてください。ここに入れた内容もこのブラウザの中だけに保存されます。年齢・所要時間・発症からの期間は自動で計算します。</p>
+    <div class="infogrid">
+      <label class="f">性別<select data-info="sex"><option value=""></option><option>男性</option><option>女性</option><option>その他</option></select></label>
+      <label class="f">生年月日<input type="date" data-info="birth"></label>
+      <div class="f"><span class="sm">年齢（今日時点）</span><span class="out" id="ageOut">—</span></div>
+      <label class="f">原因疾患<input type="text" data-info="disease" placeholder="例：左中大脳動脈領域の脳梗塞"></label>
+      <label class="f">発症日<input type="date" data-info="onset"></label>
+      <label class="f">利き手<select data-info="hand"><option value=""></option><option>右</option><option>左</option><option>両手</option><option>不明</option></select></label>
+      <label class="f">麻痺<select data-info="paralysis"><option value=""></option><option>なし</option><option>右</option><option>左</option><option>両側</option></select></label>
+      <label class="f">聴力<input type="text" data-info="hearing" placeholder="例：問題なし／右難聴"></label>
+      <label class="f">教育年数<input type="text" data-info="edu" inputmode="numeric" placeholder="例：12"></label>
+      <label class="f">職業<input type="text" data-info="job"></label>
+      <label class="f">合併症<input type="text" data-info="comp"></label>
+      <label class="f wide">備考<textarea class="plain" data-info="memo"></textarea></label>
+    </div>
+    <h3>検査情報（評価ごと）</h3>
+    <div class="tablewrap">
+      <table class="examtbl">
+        <thead><tr><th>評価</th><th>検査日</th><th>検査者</th><th>開始</th><th>終了</th><th>所要時間</th><th>発症から</th><th>検査時年齢</th></tr></thead>
+        <tbody id="examBody"></tbody>
+      </table>
+    </div>
+    <p class="note">所要時間の目安は約90分です。</p>
+  </details>
+
+  <div class="card" id="chartCard">
+    <div class="chartbar">
+      <span>下段の段階別件数：</span>
+      <span class="btngroup" id="cntTabs"></span>
+    </div>
+    <div id="chart"></div>
+  </div>
+
+  <div class="card" id="inputCard">
+    <div class="tabs" id="evalTabs" role="tablist" aria-label="入力する評価"></div>
+    <div class="legend">
+      <span><button class="cell s6" tabindex="-1">6</button> <button class="cell s5" tabindex="-1">5</button> 正答</span>
+      <span><button class="cell s4" tabindex="-1">4</button> <button class="cell s3" tabindex="-1">3</button> <button class="cell s2" tabindex="-1">2</button> <button class="cell s1" tabindex="-1">1</button> 誤答</span>
+      <span><button class="cell sx" tabindex="-1">中</button> 中止</span>
+      <span><button class="cell nt" tabindex="-1"></button> メモあり</span>
+      <button class="mini" id="btnMemo">選んだマスのメモ</button>
+      <span id="stageLegend" class="sm"></span>
+    </div>
+    <div class="tablewrap">
+      <table id="tbl">
+        <thead><tr>
+          <th></th><th>No.</th><th style="text-align:left">下位検査</th><th>問題数</th>
+          <th style="text-align:left" id="thIn">入力</th><th style="text-align:left">結果</th><th style="text-align:left">他の評価</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="note">
+      ・<b>マスを選んで 1〜6 を打つ</b>と記録され、自動で次のマスへ進みます。下位検査の最後のマスからは次の下位検査へ進みます。<b>段階6と5を正答</b>として数え、正答率は「正答数÷問題数」です（段階3・ヒント後正答は正答に入れません）。<br>
+      ・<b>0 または x</b>＝中止、<b>-</b>＝未記入に戻す、<b>Backspace</b>＝消して前へ、<b>矢印キー</b>＝移動、<b>Enter</b>＝次の下位検査へ、<b>M</b>＝メモ。全角で打っても受け付けます。<br>
+      ・マスをクリック（タップ）すると選択肢が出ます。マウスやタッチだけでも入力できます。<br>
+      ・マスを<b>右クリック／長押し</b>、またはマスを選んで「選んだマスのメモ」で、その問題の反応・誤りの種類・ヒントの有無などを記録できます。メモのあるマスには紫の印が付きます。<br>
+      ・まんがの説明（No.8・21）は段階1〜6を1マスに入れます（グラフの高さは (段階−1)÷5）。語の列挙は語数、計算はたし算・ひき算・かけ算・わり算の正答数（各0〜5）を入れると合計を出します。内訳が分からないときは合計の欄だけに入れてください。<br>
+      ・中止した問題は誤答として数えます（問題数の分母に入ります）。まったく実施していない下位検査は空欄のままにしてください（0点にはなりません）。中止基準（何問続けて誤ったら中止するか）の数値は、マニュアルで確認してください。<br>
+      ・段階5は、遅れやよどみがある場合の正答です。<br>
+      ・正答数しか分からないときは、マスを押して「正答数のみ」を選び、正答数を入れてください。<br>
+      ・<b>問題数、まんがの説明の目盛り（(段階−1)÷5）、語の列挙の上限15（15語以上は100%）は、学会公式のSLTAプロフィール自動作成ソフトと一致することを確認済みです。</b>問題数（点線の欄）は変えることもできます。
+    </p>
+  </div>
+
+  <div class="card" id="sumCard">
+    <h3 style="margin-top:0">まとめ（領域別の平均正答率）</h3>
+    <div class="tablewrap"><table class="sumtbl" id="sumTbl"></table></div>
+    <p class="note">平均は、その領域で結果のある下位検査の正答率の平均です。まんがの説明は (段階−1)÷5 を、語の列挙は上限で頭打ちにした値を含めています。かっこ内は前回の評価との差です。</p>
+  </div>
+
+  <details class="card" id="setCard">
+    <summary>設定（全員共通）<span class="note">段階の名称・基準線・線のつなぎ方など</span></summary>
+    <p class="note">設定は対象者ごとではなく、このブラウザの全員に共通で保存されます。このツールには基準値（非失語症者の値）は入っていません（学会の使用許諾のため）。必要な方は下の「基準値をまとめて読み込む」からご自身で入れてください。</p>
+    <h3>段階の名称</h3>
+    <div class="stnames" id="stNames"></div>
+    <div class="row" style="margin-top:8px"><button class="mini" id="btnStReset">名称を初期値に戻す</button></div>
+    <p class="note">段階6と5が正答です（段階5は遅れやよどみがある場合）。名称は施設での呼び方に合わせて変えられます。</p>
+    <h3>グラフ</h3>
+    <div class="row">
+      <div class="f"><span class="sm">折れ線のつなぎ方</span>
+        <span class="chk"><label><input type="radio" name="join" value="join"> すべてつなぐ（学会公式ソフトと同じ・初期値）</label><label><input type="radio" name="join" value="cut"> 大項目（聴く・話す…）ごとに切る</label></span></div>
+      <label class="f">語の列挙のグラフ上限（新しい対象者の初期値）<input type="text" id="fluMax" inputmode="numeric" style="min-width:0;width:90px"></label>
+    </div>
+    <p class="note">語の列挙は、上限を超えた語数も記録できます（グラフでは上限の高さで止めます）。今の対象者の上限は、入力表の「問題数」で変えられます。</p>
+    <h3>基準線（非失語症者の平均と −1SD）</h3>
+    <p class="note">下位検査ごとに入力すると、グラフに灰色の実線（非失語症者の平均）と破線（−1SD）で描きます。未入力の下位検査には描きません。下の表の単位は正答率（%）、まんがの説明だけは段階（1〜6）です。</p>
+    <div class="normimp">
+      <b class="sm" style="color:var(--ink)">基準値をまとめて読み込む</b>
+      <p class="note" style="margin:4px 0">学会のSLTAプロフィール自動作成ソフトウェアの値、またはマニュアルの値を、ご自身で読み込んでください。使用は日本国内の臨床・研究に限られます。<br>
+        形式：1行に「No　平均　−1SDの位置」（タブまたは空白で区切る）。<b>#</b> で始まる行は読み飛ばします。値は素点（正答数。まんがの説明は段階、語の列挙は語数、計算は正答数）で書きます。読み込むときに、正答率（%）に直します（語の列挙は15語で100%）。ファイルはこのブラウザの中で読むだけで、どこにも送りません。</p>
+      <textarea id="normText" placeholder="# 例（数値はご自身の資料から）&#10;1	平均	−1SD&#10;2	平均	−1SD"></textarea>
+      <div class="row" style="margin-top:6px;gap:8px;align-items:center">
+        <label class="mini filebtn"><input type="file" id="normFile" accept=".txt,.tsv,.csv,text/plain"> ファイルを選ぶ（.txt）</label>
+        <button class="mini" id="btnNormParse">読み込んで確認</button>
+        <span class="sm" id="normMsg"></span>
+      </div>
+      <div id="normPrev" style="display:none;margin-top:8px">
+        <div class="tablewrap"><table class="settbl"><thead><tr><th>No.</th><th>下位検査</th><th>素点 平均</th><th>素点 −1SD</th><th>グラフ 平均</th><th>グラフ −1SD</th></tr></thead><tbody id="normPrevBody"></tbody></table></div>
+        <div class="row" style="margin-top:6px;gap:8px"><button class="mini primary" id="btnNormApply">反映する</button><button class="mini" id="btnNormCancel">やめる</button></div>
+      </div>
+    </div>
+    <div class="tablewrap"><table class="settbl"><thead><tr><th>No.</th><th>下位検査</th><th>単位</th><th>平均</th><th>−1SD</th></tr></thead><tbody id="normBody"></tbody></table></div>
+    <div class="row" style="margin-top:8px"><button class="mini warn" id="btnNormClear">基準線の値をすべて消す</button></div>
+  </details>
+</main>
+<div id="printDetail"></div>
+<div id="blankSheet"></div>
+<footer>作成：KENTA SHINKAWA</footer>
+
+<div id="picker" role="dialog" aria-label="段階を選ぶ"><div class="pk-cap" id="pkCap"></div><div class="pk-row" id="pkRow"></div></div>
+
+<div class="modal" id="modal"><div class="box" role="dialog" aria-modal="true" aria-label="データを読み込む">
+  <b id="mTitle">データを読み込む</b>
+  <p class="note" id="mMsg"></p>
+  <textarea id="loadText"></textarea>
+  <div class="row" style="justify-content:flex-end;margin-top:10px">
+    <button id="mCancel">やめる</button><button class="primary" id="mOk">読み込む</button>
+  </div>
+</div></div>
+
+<div class="modal" id="noteModal"><div class="box" role="dialog" aria-modal="true" aria-label="問題ごとのメモ">
+  <b id="nTitle">メモ</b>
+  <div class="sm" id="nSub"></div>
+  <label class="f" style="margin-top:10px">実際の反応（自由記述）<textarea class="plain" id="nResp"></textarea></label>
+  <div class="sm" style="margin-top:8px">誤りの種類（複数選べます）</div>
+  <div class="chk" id="nTypes"></div>
+  <div class="chk">
+    <label><input type="checkbox" id="nHint"> ヒントあり</label>
+    <label><input type="checkbox" id="nSelf"> 自己修正</label>
+    <label><input type="checkbox" id="nDelay"> 遅れ</label>
+  </div>
+  <div class="row" style="justify-content:flex-end;margin-top:10px">
+    <button class="warn" id="nDel">メモを消す</button><button id="nCancel">やめる</button><button class="primary" id="nOk">保存</button>
+  </div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// 作成：KENTA SHINKAWA
+const ITEMS = [
+  // [大項目, 名称, 問題数（初期値）, 種類]
+  // 種類 "items"：1問ごとの段階（1〜6）。5と6を正答として数える
+  //      "stage"：まんがの説明。段階1〜6を1つ（段階1＝グラフの底、段階6＝上）
+  //      "count"：正答数（語の列挙＝語数、計算＝4種類の合計）
+  ["聴く","単語の理解",10,"items"],["聴く","短文の理解",10,"items"],["聴く","口頭命令に従う",10,"items"],["聴く","仮名の理解",10,"items"],
+  ["話す","呼称",20,"items"],["話す","単語の復唱",10,"items"],["話す","動作説明",10,"items"],["話す","まんがの説明",6,"stage"],
+  ["話す","文の復唱",5,"items"],["話す","語の列挙",15,"count"],["話す","漢字・単語の音読",5,"items"],["話す","仮名1文字の音読",10,"items"],
+  ["話す","仮名・単語の音読",5,"items"],["話す","短文の音読",5,"items"],
+  ["読む","漢字・単語の理解",10,"items"],["読む","仮名・単語の理解",10,"items"],["読む","短文の理解",10,"items"],["読む","書字命令に従う",10,"items"],
+  ["書く","漢字・単語の書字",5,"items"],["書く","仮名・単語の書字",5,"items"],["書く","まんがの説明",6,"stage"],["書く","仮名1文字の書取",10,"items"],
+  ["書く","漢字・単語の書取",5,"items"],["書く","仮名・単語の書取",5,"items"],["書く","短文の書取",5,"items"],
+  ["計算","計算",20,"count"]
+];
+const FLU = 9, CALC = 25;            // 語の列挙・計算 の位置
+const CALC_NAMES = ["たし算","ひき算","かけ算","わり算"], CALC_SHORT=["加","減","乗","除"], CALC_EACH = 5;
+const FMT = 5; // 保存データの形式（5＝評価5回分。4・3 もそのまま読める：3回分の配列は5回分に広げる）
+const NE = 5, EV = [0,1,2,3,4];       // 評価の回数（学会公式のプロフィール作成ソフトと同じ第1回〜第5回）
+const GROUPS = ["聴く","話す","読む","書く","計算"];
+// 評価ごとの色・線の種類・点の形（白黒印刷でも線種と点の形で区別できるように）
+const COLORS = ["#2563eb","#dc2626","#16a34a","#9333ea","#c2410c"];
+const DASH = ['','stroke-dasharray="8 4"','stroke-dasharray="2 4"','stroke-dasharray="11 3 2 3"','stroke-dasharray="4 2 4 2 1 6"'];
+const KEY = "slta-profile-v1", KEY2 = "slta-profile-v2", SKEY = "slta-settings-v1";
+const FONT = `'Hiragino Sans','Yu Gothic UI','Meiryo',sans-serif`;
+const CH = {W:1100,H:516,L:50,R:50,T:86,B:150,HT:666};
+const STAGES = ["6","5","4","3","2","1"];
+const DEF_STAGE_NAMES = {"6":"完全正答","5":"遅延完全正答（遅れ・よどみ）","4":"不完全正答","3":"ヒント後正答","2":"関連反応","1":"誤答"};
+const OLD_STAGE5 = "遅延完全正答"; // 以前の初期値（設定に残っていたら新しい初期値に置きかえる）
+const SVER = 2; // 設定の形式（2＝線の既定を「すべてつなぐ」に変えた版）
+const FLU_OFFICIAL = 15; // 語の列挙：15語以上は15とみなして100%（学会公式ソフトと同じ）
+const ERR_TYPES = ["音韻性錯語","新造語","記号素性錯語","意味性錯語","形式性錯語","混合性錯語","無関連錯語","保続","無反応","その他"];
+const INFO_KEYS = ["sex","birth","disease","onset","hand","paralysis","hearing","edu","job","comp","memo"];
+const MAXCELLS = 60;
+
+// ===== 設定（全員共通。キー slta-settings-v1） =====
+let settings = defSettings();
+function defSettings(){ return {ver:SVER,stageNames:Object.assign({},DEF_STAGE_NAMES),fluencyMax:15,join:true,norm:{mean:ITEMS.map(()=>""),sd:ITEMS.map(()=>"")}}; }
+function normSettings(o){
+  const s=defSettings(); if(!o||typeof o!=="object") return s;
+  const oldVer=!(toNum(o.ver)>=2);
+  if(o.stageNames&&typeof o.stageNames==="object") STAGES.forEach(k=>{ const v=o.stageNames[k]; if(typeof v==="string") s.stageNames[k]=v.slice(0,30); });
+  if(oldVer&&s.stageNames["5"].trim()===OLD_STAGE5) s.stageNames["5"]=DEF_STAGE_NAMES["5"];
+  const f=toNum(o.fluencyMax); if(f!==null&&Number.isInteger(f)&&f>0&&f<=200) s.fluencyMax=f;
+  // 以前の版は「切る」が初期値で、選ばなくても保存されていたため、古い設定は新しい既定（すべてつなぐ）にそろえる。新しい版で選んだ値はそのまま使う
+  s.join = oldVer ? true : o.join!==false;
+  if(o.norm&&typeof o.norm==="object") ["mean","sd"].forEach(k=>{ if(Array.isArray(o.norm[k])) ITEMS.forEach((_,i)=>{ const v=o.norm[k][i]; if(typeof v==="string"||typeof v==="number") s.norm[k][i]=String(v).slice(0,10); }); });
+  return s;
+}
+function loadSettings(){ try{ const t=localStorage.getItem(SKEY); settings=normSettings(t?JSON.parse(t):null); }catch(e){ settings=defSettings(); } }
+function saveSettings(){ try{ localStorage.setItem(SKEY,JSON.stringify(settings)); }catch(e){} }
+function stName(k){ return (settings.stageNames[k]||"").trim()||DEF_STAGE_NAMES[k]; }
+
+// ===== 1人分のデータ =====
+let state = null;
+let curEval = 0, cntEval = 0;
+const hashEdit = {}; // 「正答数のみ」を入力中の行（画面だけの状態）
+
+function blank(){
+  return {fmt:FMT,name:"",dates:EV.map(()=>""),
+    max:ITEMS.map((it,i)=>i===FLU?settings.fluencyMax:it[2]),
+    scores:EV.map(()=>ITEMS.map(()=>"")),
+    calc:EV.map(()=>["","","",""]),
+    notes:EV.map(()=>({})),
+    info:Object.fromEntries(INFO_KEYS.map(k=>[k,""])),
+    exams:EV.map(()=>({examiner:"",start:"",end:""}))};
+}
+function zen2han(s){ return String(s).replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)); }
+// 1問ごとの段階の文字列を整える。v4 では '-'＝未記入、'x'＝中止。それより前の形式では空白・カンマ・ハイフンは無視していたので取り除く
+function canonItems(raw,isV4){
+  let t=zen2han(raw).replace(/[＃♯]/g,"#").replace(/[\s　,，、]/g,"");
+  if(t[0]==="#") return t;
+  t=t.replace(/[ｘＸX×✕]/g,"x");
+  t = isV4 ? t.replace(/[－ー‐−]/g,"-") : t.replace(/[\-－ー‐−]/g,"");
+  if(/^[1-6x\-]*$/.test(t)) t=t.replace(/-+$/,"");
+  return t;
+}
+// 読み込んだデータを、必ず正しい形にそろえる
+// fmt が 3/4/5 でない古いデータ（v1 など）は、1問ごとの項目の得点を「正答数」とみなして "#数値" に変換する（"8"→"#8"）
+// 評価3回分の配列（fmt:3/4 や v1）は、足りない回を空欄で補って5回分にそろえる
+function normalize(o){
+  const b=blank();
+  if(!o||typeof o!=="object"||Array.isArray(o)) return b;
+  const isV4=o.fmt===4||o.fmt===5, old=!(o.fmt===3||o.fmt===4||o.fmt===5);
+  if(typeof o.name==="string"||typeof o.name==="number") b.name=String(o.name);
+  if(Array.isArray(o.dates)) for(let e=0;e<NE;e++){
+    const d=o.dates[e]; if(typeof d==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(d)) b.dates[e]=d;
+  }
+  if(Array.isArray(o.max)) ITEMS.forEach((it,i)=>{
+    if(it[3]==="stage") return; // まんがの説明は 6 で固定
+    const v=toNum(o.max[i]); if(v===null||v<=0||!Number.isInteger(v)) return;
+    if(old && it[3]==="items" && v===6 && it[2]!==6) return; // ごく初期の暫定版の名残
+    b.max[i]=Math.min(v,MAXCELLS);
+  });
+  if(Array.isArray(o.scores)) for(let e=0;e<NE;e++){
+    const row=o.scores[e]; if(!Array.isArray(row)) continue;
+    ITEMS.forEach((it,i)=>{
+      const v=row[i];
+      let s=(typeof v==="string"||(typeof v==="number"&&isFinite(v)))?String(v).trim():"";
+      if(it[3]==="items" && s!==""){
+        if(old){ const n=toNum(s); if(n!==null) s="#"+n; }
+        else s=canonItems(s,isV4);
+      }else if(it[3]==="stage"){ s=zen2han(s).replace(/[ｘＸX×]/g,"x"); }
+      b.scores[e][i]=s;
+    });
+  }
+  if(Array.isArray(o.calc)) for(let e=0;e<NE;e++){
+    const c=o.calc[e]; if(!Array.isArray(c)) continue;
+    for(let j=0;j<4;j++){ const v=c[j]; if(typeof v==="string"||typeof v==="number") b.calc[e][j]=zen2han(String(v)).trim().slice(0,4); }
+    if(b.calc[e].some(x=>x!=="")) b.scores[e][CALC]=String(calcSum(b.calc[e]));
+  }
+  if(Array.isArray(o.notes)) for(let e=0;e<NE;e++){
+    const nt=o.notes[e]; if(!nt||typeof nt!=="object"||Array.isArray(nt)) continue;
+    Object.keys(nt).forEach(k=>{
+      if(!/^\d{1,2}-\d{1,2}$/.test(k)) return;
+      const n=cleanNote(nt[k]); if(n) b.notes[e][k]=n;
+    });
+  }
+  if(o.info&&typeof o.info==="object") INFO_KEYS.forEach(k=>{ const v=o.info[k]; if(typeof v==="string"||typeof v==="number") b.info[k]=String(v).slice(0,1000); });
+  ["birth","onset"].forEach(k=>{ if(b.info[k]&&!/^\d{4}-\d{2}-\d{2}$/.test(b.info[k])) b.info[k]=""; });
+  if(Array.isArray(o.exams)) for(let e=0;e<NE;e++){
+    const x=o.exams[e]; if(!x||typeof x!=="object") continue;
+    if(typeof x.examiner==="string") b.exams[e].examiner=x.examiner.slice(0,100);
+    ["start","end"].forEach(k=>{ if(typeof x[k]==="string"&&/^\d{2}:\d{2}$/.test(x[k])) b.exams[e][k]=x[k]; });
+  }
+  return b;
+}
+function cleanNote(v){
+  if(!v||typeof v!=="object") return null;
+  const n={resp:typeof v.resp==="string"?v.resp.slice(0,2000):"",
+    types:Array.isArray(v.types)?ERR_TYPES.filter(t=>v.types.includes(t)):[],
+    hint:v.hint===true,self:v.self===true,delay:v.delay===true};
+  return (n.resp.trim()||n.types.length||n.hint||n.self||n.delay)?n:null;
+}
+
+// ===== 複数の対象者の保存（キー slta-profile-v2） =====
+// db = {version:2, current:"<id>", patients:{"<id>": {fmt:4,name,dates,max,scores,calc,notes,info,exams,updated}}}
+let db = null;
+function newId(){ let id; do{ id="p"+Date.now().toString(36)+Math.random().toString(36).slice(2,8); }while(db&&db.patients&&db.patients[id]); return id; }
+function nowIso(){ return new Date().toISOString(); }
+function mkPatient(o,updated){ const p=normalize(o); p.updated=(typeof updated==="string"&&updated)?updated:nowIso(); return p; }
+function plain(p){ return {fmt:FMT,name:p.name,dates:p.dates,max:p.max,scores:p.scores,calc:p.calc,notes:p.notes,info:p.info,exams:p.exams}; }
+function normDb(o){
+  if(!o||typeof o!=="object"||Array.isArray(o)||!o.patients||typeof o.patients!=="object"||Array.isArray(o.patients)) return null;
+  const out={version:2,current:"",patients:{}};
+  Object.keys(o.patients).forEach(k=>{
+    const v=o.patients[k]; if(!v||typeof v!=="object"||Array.isArray(v)) return;
+    const id=/^[A-Za-z0-9_-]{1,40}$/.test(k)?k:newId();
+    out.patients[id]=mkPatient(v,v.updated);
+  });
+  const ids=Object.keys(out.patients); if(!ids.length) return null;
+  out.current=(typeof o.current==="string"&&out.patients[o.current])?o.current:ids[0];
+  return out;
+}
+function addPatient(o,updated){ const id=newId(); db.patients[id]=mkPatient(o,updated); return id; }
+function selectPatient(id){ if(!db.patients[id]) id=Object.keys(db.patients)[0]; db.current=id; state=db.patients[id]; }
+function persist(){ try{localStorage.setItem(KEY2,JSON.stringify(db));}catch(e){} }
+function load(){
+  db=null;
+  try{const s=localStorage.getItem(KEY2); if(s) db=normDb(JSON.parse(s));}catch(e){db=null;}
+  if(!db){
+    // v2 が無ければ v1 を1人目として取り込む（v1 のキーは消さずに残す）
+    db={version:2,current:"",patients:{}};
+    let first=null;
+    try{const s=localStorage.getItem(KEY); if(s) first=JSON.parse(s);}catch(e){first=null;}
+    db.current=addPatient(first);
+    persist();
+  }
+  selectPatient(db.current);
+}
+function save(){ state.updated=nowIso(); db.patients[db.current]=state; persist(); }
+
+function patientLabel(p){
+  const nm=p.name.trim()||"（名前未入力）";
+  const ds=p.dates.filter(d=>d).sort();
+  return ds.length ? `${nm}（${fmtDate(ds[ds.length-1])}）` : nm;
+}
+function renderPatients(){
+  const sel=document.getElementById("psel"); sel.innerHTML="";
+  Object.keys(db.patients).forEach(id=>{
+    const op=document.createElement("option"); op.value=id; op.textContent=patientLabel(db.patients[id]);
+    if(id===db.current) op.selected=true; sel.appendChild(op);
+  });
+}
+
+// 全角数字も受け付けて数値にする。数字でなければ null
+function toNum(raw){
+  if(raw===null||raw===undefined) return null;
+  const t=String(raw).trim().replace(/[０-９．－]/g,c=>c==="．"?".":c==="－"?"-":String.fromCharCode(c.charCodeAt(0)-0xFEE0));
+  if(t==="") return null;
+  const v=Number(t); return isFinite(v)?v:null;
+}
+function calcPartOk(v){ const n=toNum(v); return n!==null&&Number.isInteger(n)&&n>=0&&n<=CALC_EACH; }
+function calcSum(parts){ return parts.reduce((a,v)=>a+(calcPartOk(v)?toNum(v):0),0); }
+
+// ===== 判定 =====
+function zeroCnt(){ return {"6":0,"5":0,"4":0,"3":0,"2":0,"1":0,"x":0}; }
+// 1つの下位検査を判定する。未実施なら null
+// {t, bad, msg, p:グラフの高さ(0〜100、null＝描かない), c:正答数, n:問題数, entered, cnt:段階別件数, hash, v, over, abort}
+function evalCell(e,i,st){
+  st=st||state;
+  const raw=st.scores[e][i];
+  const t=ITEMS[i][3], n=st.max[i];
+  if(raw===""||raw===null||raw===undefined) return null;
+  if(t==="items"){
+    const h=String(raw);
+    if(h[0]==="#"){
+      const v=toNum(h.slice(1));
+      if(v===null||!Number.isInteger(v)||v<0) return {t,bad:true,hash:true,msg:"正答数が読めません"};
+      if(v>n) return {t,bad:true,hash:true,msg:`正答${v}は問題数${n}より多い`};
+      return {t,hash:true,c:v,n,p:v/n*100};
+    }
+    if(!/^[1-6x\-]+$/.test(h)) return {t,bad:true,msg:"読めない文字があります"};
+    const cnt=zeroCnt(); let entered=0;
+    for(const ch of h){ if(ch==="-") continue; entered++; cnt[ch]++; }
+    if(!entered) return null;
+    const c=cnt["6"]+cnt["5"];
+    const r={t,c,n,p:c/n*100,entered,cnt,seq:h,abort:cnt.x};
+    if(h.length>n){ r.bad=true; r.msg=`問題数${n}より多く入力されています（${h.length}問分）`; }
+    return r;
+  }
+  if(t==="stage"){
+    const s=zen2han(raw).trim().toLowerCase(), cnt=zeroCnt();
+    if(s==="x"){ cnt.x=1; return {t,abort:1,v:null,p:null,cnt}; }
+    const v=toNum(s);
+    if(v===null||!Number.isInteger(v)||v<1||v>6) return {t,bad:true,msg:"段階は1〜6"};
+    cnt[String(v)]=1;
+    return {t,v,p:(v-1)/5*100,cnt};
+  }
+  if(i===CALC&&st.calc[e].some(x=>x!==""&&!calcPartOk(x))) return {t,bad:true,msg:`内訳は各0〜${CALC_EACH}で入力`};
+  const v=toNum(raw);
+  if(v===null||!Number.isInteger(v)||v<0) return {t,bad:true,msg:"正答数を入力"};
+  if(v>n){
+    if(i===FLU) return {t,v,c:v,n,p:100,over:true,flu:true};
+    return {t,bad:true,msg:`満点${n}より多い`};
+  }
+  return {t,v,c:v,n,p:v/n*100,flu:i===FLU};
+}
+function hasData(e,st){ st=st||state; return st.scores[e].some(v=>v!=="")||st.calc[e].some(v=>v!==""); }
+function fmtDate(d){ return d?d.replace(/-/g,"/"):"日付未入力"; }
+function pctStr(r){ if(r.t==="stage") return r.abort?"中止":`段階${r.v}`; return `${Math.round(r.p)}%`; }
+function okR(r){ return r&&!r.bad&&r.p!==null&&r.p!==undefined; }
+function prevR(e,i){ for(let k=e-1;k>=0;k--){ const r=evalCell(k,i); if(okR(r)) return {r,e:k}; } return null; }
+function diffHtml(pr,r){
+  if(!pr||!okR(r)) return "";
+  const stg=r.t==="stage";
+  const d=(stg||r.flu) ? r.v-pr.r.v : Math.round(r.p)-Math.round(pr.r.p);
+  const cls=d>0?"up":d<0?"down":"same", ar=d>0?"↑":d<0?"↓":"→";
+  return `<span class="${cls}" title="評価${pr.e+1}との差">（${ar}${d>0?"+":""}${d}${stg?"段階":r.flu?"語":""}）</span>`;
+}
+function cntHtml(cnt){
+  return `<span class="cnts" title="${esc(STAGES.map(k=>`段階${k} ${stName(k)}`).join("／"))}">`+STAGES.map(k=>cnt[k]?`<b>${k}:${cnt[k]}</b>`:`${k}:0`).join(" ")+` 中止:${cnt.x}</span>`;
+}
+function cntText(cnt){ return STAGES.map(k=>`${k}:${cnt[k]}`).join(" ")+` 中止:${cnt.x}`; }
+// 誤りの種類の集計（i を省くと評価全体）
+function errTally(e,i,st){
+  st=st||state; const t={};
+  Object.keys(st.notes[e]).forEach(k=>{ if(i!==undefined&&k.split("-")[0]!==String(i)) return; st.notes[e][k].types.forEach(x=>{t[x]=(t[x]||0)+1;}); });
+  return ERR_TYPES.filter(x=>t[x]).map(x=>`${x}${t[x]}`).join("・");
+}
+
+// ===== 入力表 =====
+function getVal(i,k){
+  const s=state.scores[curEval][i];
+  if(ITEMS[i][3]==="stage") return s===""?"-":zen2han(s).toLowerCase();
+  if(!/^[1-6x\-]*$/.test(s)) return "-";
+  return s[k]||"-";
+}
+function cellText(v){ return v==="x"?"中":(v==="-"?"":v); }
+function cellCls(i,k,v){
+  let c="cell nav"+(v!=="-"&&/^[1-6x]$/.test(v)?" s"+v:"");
+  if(state.notes[curEval][`${i}-${k}`]) c+=" nt";
+  if(ITEMS[i][3]==="items"&&k>=state.max[i]) c+=" over";
+  return c;
+}
+function cellLabel(i,k,v){
+  const it=ITEMS[i];
+  const what=v==="-"?"未記入":v==="x"?"中止":`段階${v} ${stName(v)}`;
+  return it[3]==="stage"?`No.${i+1} ${it[1]}：${what}`:`No.${i+1} ${it[1]} 問${k+1}：${what}`;
+}
+function cellHtml(i,k){
+  const v=getVal(i,k);
+  return `<button type="button" class="${cellCls(i,k,v)}" data-i="${i}" data-k="${k}" aria-label="${esc(cellLabel(i,k,v))}" title="${esc(cellLabel(i,k,v))}">${cellText(v)}</button>`;
+}
+function paintCell(el){
+  const i=+el.dataset.i,k=+el.dataset.k,v=getVal(i,k);
+  el.className=cellCls(i,k,v); el.textContent=cellText(v);
+  const lb=cellLabel(i,k,v); el.setAttribute("aria-label",lb); el.title=lb;
+  if(ITEMS[i][3]==="stage"){ const sn=el.parentNode.parentNode.querySelector(".stgname"); if(sn) sn.textContent=v==="-"?"":v==="x"?"中止":stName(v); }
+}
+function inputHtml(i){
+  const it=ITEMS[i], t=it[3], e=curEval, raw=state.scores[e][i];
+  if(t==="items"){
+    const r=evalCell(e,i);
+    if(hashEdit[i]||(r&&r.hash)||(raw&&raw[0]==="#")){
+      const v=raw&&raw[0]==="#"?raw.slice(1):"";
+      return `<div class="hashbox${r&&r.bad?" err":""}">正答数のみ入力：<input class="num nav hashin${r&&r.bad?" bad":""}" data-i="${i}" inputmode="numeric" autocomplete="off" aria-label="No.${i+1} ${it[1]} 正答数のみ" value="${esc(v)}"> / ${state.max[i]}　<button type="button" class="mini" data-act="redo" data-i="${i}">マスで入力し直す</button></div>`;
+    }
+    if(r&&r.bad&&!r.seq&&raw!==""){
+      return `<div class="hashbox err">読めない入力「${esc(raw)}」　<button type="button" class="mini" data-act="redo" data-i="${i}">消してマスで入力</button></div>`;
+    }
+    const len=/^[1-6x\-]*$/.test(raw)?raw.length:0;
+    const cnt=Math.min(Math.max(state.max[i],len),MAXCELLS);
+    let h=`<div class="cells" style="grid-template-columns:repeat(${Math.min(cnt,10)},auto)">`;
+    for(let k=0;k<cnt;k++) h+=cellHtml(i,k);
+    return h+"</div>";
+  }
+  if(t==="stage"){
+    const v=getVal(i,0);
+    return `<div class="cells" style="display:inline-grid;grid-template-columns:auto">${cellHtml(i,0)}</div><span class="stgname">${v==="-"?"":v==="x"?"中止":esc(stName(v))}</span>`;
+  }
+  if(i===CALC){
+    const c=state.calc[e], any=c.some(x=>x!=="");
+    let h=`<div class="calc">`;
+    for(let j=0;j<4;j++) h+=`<label>${CALC_SHORT[j]}<input class="num nav calcp${c[j]!==""&&!calcPartOk(c[j])?" bad":""}" data-i="${i}" data-j="${j}" inputmode="numeric" autocomplete="off" aria-label="${CALC_NAMES[j]}の正答数（0〜${CALC_EACH}）" title="${CALC_NAMES[j]}（0〜${CALC_EACH}）" value="${esc(c[j])}">/${CALC_EACH}</label>`;
+    h+=`<label>合計<input class="num nav cnum" data-i="${i}" inputmode="numeric" autocomplete="off" aria-label="計算の合計" ${any?"readonly":""} value="${esc(raw)}"></label></div>`;
+    return h;
+  }
+  return `<input class="num nav cnum" data-i="${i}" inputmode="numeric" autocomplete="off" aria-label="No.${i+1} ${it[1]}（${i===FLU?"語数":"正答数"}）" value="${esc(raw)}"> <span class="sm">${i===FLU?"語":""}</span>`;
+}
+function buildTable(){
+  const tb=document.querySelector("#tbl tbody"); tb.innerHTML="";
+  ITEMS.forEach((it,i)=>{
+    const tr=document.createElement("tr"); tr.id="r"+i;
+    let h="";
+    if(i===0||ITEMS[i-1][0]!==it[0]){
+      const span=ITEMS.filter(x=>x[0]===it[0]).length;
+      h+=`<td class="grp" rowspan="${span}">${it[0]}</td>`;
+    }
+    const t=it[3];
+    const tag = t==="stage" ? ' <span class="sm">（段階）</span>' : i===FLU ? ' <span class="sm">（語数）</span>' : t==="count" ? ' <span class="sm">（正答数）</span>' : '';
+    h+=`<td>${i+1}</td><td class="name">${it[1]}${tag}</td>
+      <td><input class="mx" data-i="${i}" inputmode="numeric" aria-label="No.${i+1} ${t==="stage"?"段階の上限":i===FLU?"グラフの上限":"問題数"}" title="${i===FLU?"グラフの上限":"問題数"}" value="${state.max[i]}" ${t==="stage"||i===CALC?'disabled':''}></td>
+      <td class="in" id="in${i}">${inputHtml(i)}</td><td class="res" id="res${i}"></td><td class="oth" id="oth${i}"></td>`;
+    tr.innerHTML=h; tb.appendChild(tr);
+  });
+  document.getElementById("thIn").innerHTML=`<span class="e${curEval+1}"><span class="dot"></span></span>評価${curEval+1} の入力`;
+}
+function renderIn(i){ document.getElementById("in"+i).innerHTML=inputHtml(i); }
+function updateRes(i){
+  const e=curEval, r=evalCell(e,i), it=ITEMS[i];
+  let h="";
+  if(!r) h=`<span class="muted">未実施</span>`;
+  else{
+    const df=diffHtml(prevR(e,i),r);
+    if(r.bad && !r.seq) h=`<span class="err">${esc(r.msg)}</span>`;
+    else if(it[3]==="items"){
+      h=`<b>正答 ${r.c}/${r.n}</b>　${Math.round(r.p)}%${r.bad?"":df}`;
+      if(r.hash) h+=`<br><span class="sm">正答数のみ</span>`;
+      else{
+        h+=`<br><span class="sm">入力 ${r.entered}/${r.n}問${r.abort?`（中止${r.abort}）`:""}</span><br>${cntHtml(r.cnt)}`;
+        if(r.bad) h+=`<br><span class="err">${esc(r.msg)}</span>`;
+      }
+    }else if(it[3]==="stage") h=r.abort?`<b>中止</b>`:`<b>段階${r.v}</b>（${esc(stName(String(r.v)))}）${df}`;
+    else if(i===FLU) h=`<b>${r.v}語</b>　${Math.round(r.p)}%${r.over?`<br><span class="sm">上限${r.n}を超えています（グラフは上限で表示）</span>`:""}${df}`;
+    else{
+      h=`<b>正答 ${r.c}/${r.n}</b>　${Math.round(r.p)}%${df}`;
+      const c=state.calc[e]; if(c.some(x=>x!=="")) h+=`<br><span class="sm">${CALC_SHORT.map((s,j)=>`${s}${c[j]===""?"−":c[j]}`).join(" ")}</span>`;
+    }
+  }
+  const et=errTally(e,i); if(et) h+=`<br><span class="etypes">${esc(et)}</span>`;
+  document.getElementById("res"+i).innerHTML=h;
+  // 他の評価
+  const o=[];
+  for(let k=0;k<NE;k++){ if(k===e) continue; const rr=evalCell(k,i); if(!okR(rr)&&!(rr&&rr.abort)) continue;
+    o.push(`<span class="e${k+1}"><span class="dot"></span></span>評価${k+1} ${pctStr(rr)}${diffHtml(prevR(k,i),rr)}`); }
+  document.getElementById("oth"+i).innerHTML=o.join("<br>");
+  document.getElementById("r"+i).classList.toggle("filled",!!r);
+}
+function renderTabs(){
+  const mk=(id,cur,fn,pre)=>{
+    const box=document.getElementById(id); box.innerHTML="";
+    for(let e=0;e<NE;e++){
+      const b=document.createElement("button"); b.type="button";
+      b.className=(id==="evalTabs"?"tab ":"mini ")+"e"+(e+1)+(e===cur?" on":"");
+      if(id==="cntTabs"&&e===cur){ b.style.background="var(--ink)"; b.style.color="#fff"; }
+      b.setAttribute("role",id==="evalTabs"?"tab":"button"); b.setAttribute("aria-selected",e===cur?"true":"false");
+      b.innerHTML=`<span class="dot"></span>${pre}評価${e+1}${state.dates[e]?`（${fmtDate(state.dates[e])}）`:""}`;
+      b.onclick=()=>fn(e); box.appendChild(b);
+    }
+  };
+  mk("evalTabs",curEval,e=>{ curEval=e; cntEval=e; closePicker(); Object.keys(hashEdit).forEach(k=>delete hashEdit[k]); buildTable(); refresh(); renderTabs(); },"");
+  mk("cntTabs",cntEval,e=>{ cntEval=e; renderTabs(); drawChart(); },"");
+  document.getElementById("stageLegend").textContent="段階："+STAGES.map(k=>`${k} ${stName(k)}`).join("／");
+}
+
+// マスに値を入れる
+function setVal(i,k,v){
+  const e=curEval;
+  if(ITEMS[i][3]==="stage") state.scores[e][i]=v==="-"?"":v;
+  else{
+    let s=state.scores[e][i]; if(!/^[1-6x\-]*$/.test(s)) s="";
+    const a=s.split(""); while(a.length<=k) a.push("-"); a[k]=v;
+    state.scores[e][i]=a.join("").replace(/-+$/,"");
+  }
+  save();
+  const el=cellAt(i,k); if(el) paintCell(el);
+  updateRes(i); afterChange();
+}
+function cellAt(i,k){ return document.querySelector(`#tbl .cell[data-i="${i}"][data-k="${k}"]`); }
+function navs(){ return [...document.querySelectorAll("#tbl .nav")].filter(el=>!el.readOnly&&!el.disabled); }
+function focusEl(el){ if(!el) return; el.focus(); if(el.select) el.select(); try{ el.scrollIntoView({block:"nearest",inline:"nearest"}); }catch(e){} }
+function moveNav(el,d){ const a=navs(), j=a.indexOf(el), nx=a[j+d]; if(nx) focusEl(nx); return nx||null; }
+function nextRowFirst(el){
+  const a=navs(), j=a.indexOf(el), tr=el.closest("tr");
+  for(let q=j+1;q<a.length;q++) if(a[q].closest("tr")!==tr){ focusEl(a[q]); return a[q]; }
+  return null;
+}
+function keyVal(k){
+  if(!k||k.length!==1) return null;
+  k=zen2han(k);
+  if(/[1-6]/.test(k)) return k;
+  if(/[0xXｘＸ×]/.test(k)) return "x";
+  if(/[-－ー−‐]/.test(k)) return "-";
+  if(/[mMｍＭ]/.test(k)) return "memo";
+  return null;
+}
+let lastCell=null;
+function cellKey(ev){
+  const el=ev.target; if(!el.classList||!el.classList.contains("cell")||!el.dataset.i) return;
+  if(ev.isComposing||ev.keyCode===229||ev.ctrlKey||ev.metaKey||ev.altKey) return;
+  const i=+el.dataset.i,k=+el.dataset.k, kv=keyVal(ev.key);
+  if(kv&&kv!=="memo"&&kv!=="-"){ ev.preventDefault(); closePicker(); setVal(i,k,kv); moveNav(el,1); return; }
+  if(kv==="-"){ ev.preventDefault(); setVal(i,k,"-"); return; }
+  if(kv==="memo"){ ev.preventDefault(); openNote(i,k); return; }
+  switch(ev.key){
+    case "Backspace":{
+      ev.preventDefault(); closePicker();
+      if(getVal(i,k)!=="-"){ setVal(i,k,"-"); return; }
+      const a=navs(), pv=a[a.indexOf(el)-1];
+      if(pv&&pv.classList.contains("cell")){ setVal(+pv.dataset.i,+pv.dataset.k,"-"); focusEl(pv); }
+      else if(pv) focusEl(pv);
+      return; }
+    case "Delete": ev.preventDefault(); setVal(i,k,"-"); return;
+    case "ArrowRight": ev.preventDefault(); closePicker(); moveNav(el,1); return;
+    case "ArrowLeft": ev.preventDefault(); closePicker(); moveNav(el,-1); return;
+    case "ArrowDown": case "ArrowUp":{
+      ev.preventDefault(); closePicker();
+      const d=ev.key==="ArrowDown"?1:-1;
+      const sameRow=cellAt(i,k+10*d);
+      if(ITEMS[i][3]==="items"&&sameRow&&Math.floor(k/10)!==Math.floor((k+10*d)/10)){ focusEl(sameRow); return; }
+      for(let q=i+d;q>=0&&q<ITEMS.length;q+=d){
+        const cs=document.querySelectorAll(`#tbl .cell[data-i="${q}"]`);
+        if(cs.length){ const kk=d>0?k%10:(cs.length>10?Math.min(10+k%10,cs.length-1):Math.min(k%10,cs.length-1)); focusEl(cs[Math.min(kk,cs.length-1)]); return; }
+        const inp=document.querySelector(`#in${q} .nav`); if(inp&&!inp.readOnly){ focusEl(inp); return; }
+      }
+      return; }
+    case "Enter": ev.preventDefault(); closePicker(); nextRowFirst(el); return;
+    case "Escape": closePicker(); return;
+  }
+}
+
+// ===== 小さな選択肢 =====
+let pk=null; // {i,k,el}
+function openPicker(el){
+  const i=+el.dataset.i,k=+el.dataset.k, it=ITEMS[i];
+  pk={i,k,el};
+  document.getElementById("pkCap").textContent=`評価${curEval+1}・No.${i+1} ${it[1]}${it[3]==="stage"?"":` 問${k+1}`}`;
+  const row=document.getElementById("pkRow"); row.innerHTML="";
+  const add=(v,html,cls,title)=>{ const b=document.createElement("button"); b.type="button"; b.className=cls||""; b.innerHTML=html; b.title=title||""; b.dataset.v=v; row.appendChild(b); };
+  STAGES.forEach(s=>add(s,`${s}<small>${esc(stName(s).slice(0,4))}</small>`,"s"+s,`段階${s} ${stName(s)}`));
+  add("x","中止<small>×</small>","","中止");
+  add("-","消す","","未記入に戻す");
+  add("memo","メモ","","この問題のメモ");
+  if(it[3]==="items") add("hash","正答数<small>のみ</small>","","マスを使わず正答数だけを入れる");
+  add("close","✕","","閉じる");
+  const p=document.getElementById("picker"); p.classList.add("on");
+  // マスの並び全体の下に出す（呼称のような2段のマスを隠さないため）
+  const rc=el.getBoundingClientRect(), box=(el.closest(".cells")||el).getBoundingClientRect(), pw=p.offsetWidth, vw=document.documentElement.clientWidth;
+  let x=rc.left+window.scrollX; if(x+pw>window.scrollX+vw-8) x=window.scrollX+vw-8-pw; if(x<window.scrollX+8) x=window.scrollX+8;
+  p.style.left=x+"px"; p.style.top=(box.bottom+window.scrollY+4)+"px";
+}
+function closePicker(){ document.getElementById("picker").classList.remove("on"); pk=null; }
+function pickerClick(ev){
+  const b=ev.target.closest("button"); if(!b||!pk) return;
+  const {i,k,el}=pk, v=b.dataset.v;
+  if(v==="close"){ closePicker(); focusEl(el); return; }
+  if(v==="memo"){ closePicker(); openNote(i,k); return; }
+  if(v==="hash"){ closePicker(); hashEdit[i]=true; const r0=evalCell(curEval,i); state.scores[curEval][i]=(r0&&r0.seq&&!r0.bad)?"#"+r0.c:""; /* マスの入力があれば、その正答数を引き継ぐ */ save(); renderIn(i); updateRes(i); afterChange(); focusEl(document.querySelector(`#in${i} .hashin`)); return; }
+  setVal(i,k,v);
+  if(v==="-"){ openPicker(el); return; }
+  const a=navs(), nx=a[a.indexOf(el)+1];
+  if(nx&&nx.classList.contains("cell")&&nx.closest("tr")===el.closest("tr")){ focusEl(nx); openPicker(nx); }
+  else{ closePicker(); if(nx) focusEl(nx); }
+}
+
+// ===== 問題ごとのメモ =====
+let noteTarget=null;
+function openNote(i,k){
+  closePicker();
+  const e=curEval, key=`${i}-${k}`, n=state.notes[e][key]||{resp:"",types:[],hint:false,self:false,delay:false};
+  noteTarget={e,i,k};
+  const it=ITEMS[i], v=getVal(i,k);
+  document.getElementById("nTitle").textContent=`メモ：評価${e+1}・No.${i+1} ${it[1]}${it[3]==="stage"?"":` 問${k+1}`}`;
+  document.getElementById("nSub").textContent="記録："+(v==="-"?"未記入":v==="x"?"中止":`段階${v}（${stName(v)}）`);
+  document.getElementById("nResp").value=n.resp;
+  document.getElementById("nTypes").innerHTML=ERR_TYPES.map(t=>`<label><input type="checkbox" value="${t}" ${n.types.includes(t)?"checked":""}> ${t}</label>`).join("");
+  document.getElementById("nHint").checked=n.hint; document.getElementById("nSelf").checked=n.self; document.getElementById("nDelay").checked=n.delay;
+  document.getElementById("noteModal").classList.add("on");
+  document.getElementById("nResp").focus();
+}
+function closeNote(){ document.getElementById("noteModal").classList.remove("on"); const t=noteTarget; noteTarget=null; if(t&&t.e===curEval) focusEl(cellAt(t.i,t.k)); }
+function saveNote(del){
+  if(!noteTarget) return;
+  const {e,i,k}=noteTarget, key=`${i}-${k}`;
+  const n=del?null:cleanNote({resp:document.getElementById("nResp").value,
+    types:[...document.querySelectorAll("#nTypes input:checked")].map(x=>x.value),
+    hint:document.getElementById("nHint").checked,self:document.getElementById("nSelf").checked,delay:document.getElementById("nDelay").checked});
+  if(n) state.notes[e][key]=n; else delete state.notes[e][key];
+  save();
+  const el=cellAt(i,k); if(el) paintCell(el);
+  updateRes(i); afterChange(); toast(n?"メモを保存しました":"メモを消しました"); closeNote();
+}
+
+// ===== 表のイベント =====
+function bindTable(){
+  const tb=document.querySelector("#tbl tbody");
+  tb.addEventListener("keydown",ev=>{
+    const el=ev.target;
+    if(el.classList.contains("cell")) return cellKey(ev);
+    if(el.classList.contains("nav")&&ev.key==="Enter"&&!ev.isComposing){ ev.preventDefault(); moveNav(el,1); }
+    if(el.classList.contains("mx")&&ev.key==="Enter"&&!ev.isComposing){ ev.preventDefault();
+      const all=[...tb.querySelectorAll("input.mx:not([disabled])")], nx=all[all.indexOf(el)+1]; if(nx){nx.focus();nx.select();} }
+  });
+  tb.addEventListener("focusin",ev=>{ const el=ev.target; if(el.classList.contains("cell")) lastCell={i:+el.dataset.i,k:+el.dataset.k,e:curEval}; });
+  let lpTimer=null, lpFired=false;
+  tb.addEventListener("click",ev=>{
+    const b=ev.target.closest("button"); if(!b) return;
+    if(b.classList.contains("cell")){ if(lpFired){lpFired=false;return;} if(pk&&pk.el===b){ closePicker(); return; } openPicker(b); return; }
+    if(b.dataset.act==="redo"){ const i=+b.dataset.i; delete hashEdit[i]; state.scores[curEval][i]=""; save(); renderIn(i); updateRes(i); afterChange(); focusEl(cellAt(i,0)); }
+  });
+  tb.addEventListener("contextmenu",ev=>{ const b=ev.target.closest(".cell"); if(!b) return; ev.preventDefault(); openNote(+b.dataset.i,+b.dataset.k); });
+  tb.addEventListener("touchstart",ev=>{ const b=ev.target.closest(".cell"); if(!b) return; lpFired=false; clearTimeout(lpTimer);
+    lpTimer=setTimeout(()=>{ lpFired=true; openNote(+b.dataset.i,+b.dataset.k); },550); },{passive:true});
+  ["touchend","touchmove","touchcancel"].forEach(t=>tb.addEventListener(t,()=>clearTimeout(lpTimer),{passive:true}));
+  tb.addEventListener("input",ev=>{
+    const el=ev.target, i=+el.dataset.i, e=curEval;
+    if(el.classList.contains("mx")){
+      const v=toNum(el.value), ok=v!==null&&v>0&&Number.isInteger(v)&&v<=MAXCELLS;
+      el.classList.toggle("bad",!ok);
+      if(ok){ state.max[i]=v; save(); renderIn(i); updateRes(i); afterChange(); }
+      return;
+    }
+    if(el.classList.contains("hashin")){
+      const t=zen2han(el.value).trim();
+      state.scores[e][i]=t===""?"":"#"+t; if(t==="") hashEdit[i]=true;
+      save(); const r=evalCell(e,i); el.classList.toggle("bad",!!(r&&r.bad)); el.closest(".hashbox").classList.toggle("err",!!(r&&r.bad));
+      updateRes(i); afterChange(); return;
+    }
+    if(el.classList.contains("calcp")){
+      const j=+el.dataset.j; state.calc[e][j]=zen2han(el.value).trim();
+      el.classList.toggle("bad",state.calc[e][j]!==""&&!calcPartOk(state.calc[e][j]));
+      const any=state.calc[e].some(x=>x!=="");
+      state.scores[e][CALC]=any?String(calcSum(state.calc[e])):"";
+      const tot=document.querySelector(`#in${CALC} input.cnum`); tot.value=state.scores[e][CALC]; tot.readOnly=any;
+      save(); updateRes(i); afterChange(); return;
+    }
+    if(el.classList.contains("cnum")){
+      state.scores[e][i]=el.value.trim(); save();
+      const r=evalCell(e,i); el.classList.toggle("bad",!!(r&&r.bad));
+      updateRes(i); afterChange(); return;
+    }
+  });
+}
+
+function refresh(){
+  ITEMS.forEach((_,i)=>updateRes(i));
+  afterChange();
+}
+function afterChange(){ drawChart(); renderSummary(); updatePrintHead(); }
+
+// ===== グラフ（上段：正答率、下段：段階別件数） =====
+function marker(e,cx,cy,k){
+  const c=COLORS[e]; k=k||1;
+  if(e===0) return `<circle cx="${cx}" cy="${cy}" r="${5*k}" fill="${c}"/>`;
+  if(e===1) return `<rect x="${cx-4.5*k}" y="${cy-4.5*k}" width="${9*k}" height="${9*k}" fill="${c}"/>`;
+  if(e===2) return `<polygon points="${cx},${cy-6*k} ${cx+5.5*k},${cy+4*k} ${cx-5.5*k},${cy+4*k}" fill="${c}"/>`;
+  if(e===3) return `<polygon points="${cx},${cy-6.5*k} ${cx+5.5*k},${cy} ${cx},${cy+6.5*k} ${cx-5.5*k},${cy}" fill="${c}"/>`;
+  return `<circle cx="${cx}" cy="${cy}" r="${4.6*k}" fill="#fff" stroke="${c}" stroke-width="${2.4*k}"/>`;
+}
+function normP(kind,i){
+  const v=toNum(settings.norm[kind][i]); if(v===null) return null;
+  if(ITEMS[i][3]==="stage") return (v>=1&&v<=6)?(v-1)/5*100:null;
+  return (v>=0&&v<=100)?v:null;
+}
+// 点の並びを線分に分ける
+// 「すべてつなぐ」（学会公式ソフトと同じ）：26点を1本の線で結ぶ。値のない点は飛ばして前後の点を結ぶ
+// 「大項目ごとに切る」：大項目の境目と、値のない所で線を切る
+function segments(getPt){
+  const out=[]; let seg=[];
+  ITEMS.forEach((it,i)=>{
+    if(!settings.join&&i>0&&ITEMS[i-1][0]!==it[0]){ out.push(seg); seg=[]; }
+    const p=getPt(i); if(p) seg.push(p); else if(!settings.join){ out.push(seg); seg=[]; }
+  });
+  out.push(seg); return out.filter(s=>s.length>1);
+}
+function chartSVG(forExport){
+  const {W,H,L,R,T,B,HT}=CH;
+  const n=ITEMS.length, cw=(W-L-R)/n;
+  const x=i=>L+cw*(i+.5), y=p=>T+(H-T-B)*(1-p/100);
+  let s=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${HT}" ${forExport?`width="${W}" height="${HT}"`:''} font-family="${FONT}" role="img" aria-label="SLTAプロフィール">`;
+  s+=`<rect x="0" y="0" width="${W}" height="${HT}" fill="#fff"/>`;
+  // 凡例：1段目＝評価（最大5つ）、2段目＝基準線と対象者名
+  let lx=L;
+  for(let e=0;e<NE;e++){
+    if(!hasData(e)) continue;
+    s+=`<line x1="${lx}" y1="18" x2="${lx+34}" y2="18" stroke="${COLORS[e]}" stroke-width="2.5" ${DASH[e]}/>`;
+    s+=marker(e,lx+17,18,.9);
+    s+=`<text x="${lx+42}" y="22.5" font-size="13" fill="#374151">評価${e+1}（${fmtDate(state.dates[e])}）</text>`;
+    lx+=196;
+  }
+  const hasNorm=ITEMS.some((_,i)=>normP("mean",i)!==null||normP("sd",i)!==null);
+  if(hasNorm){
+    const ly=44, nx=L;
+    s+=`<line x1="${nx}" y1="${ly}" x2="${nx+30}" y2="${ly}" stroke="#6b7280" stroke-width="2"/><text x="${nx+36}" y="${ly+4.5}" font-size="12" fill="#4b5563">非失語症者 平均（実線）</text>`;
+    s+=`<line x1="${nx+190}" y1="${ly}" x2="${nx+220}" y2="${ly}" stroke="#6b7280" stroke-width="2" stroke-dasharray="5 3"/><text x="${nx+226}" y="${ly+4.5}" font-size="12" fill="#4b5563">−1SD（破線）</text>`;
+  }
+  if(state.name) s+=`<text x="${W-R}" y="48.5" text-anchor="end" font-size="13" fill="#374151">対象者：${esc(state.name)}</text>`;
+  GROUPS.forEach((g,gi)=>{
+    const idx=ITEMS.map((it,i)=>it[0]===g?i:-1).filter(i=>i>=0);
+    const x0=L+cw*idx[0], x1=L+cw*(idx[idx.length-1]+1);
+    s+=`<rect x="${x0}" y="${T}" width="${x1-x0}" height="${H-T-B}" fill="${gi%2?'#f3f4f6':'#fbfbfb'}"/>`;
+    s+=`<text x="${(x0+x1)/2}" y="${T-12}" text-anchor="middle" font-size="15" font-weight="700" fill="#374151">${g}</text>`;
+    s+=`<line x1="${x0}" y1="${T}" x2="${x0}" y2="${HT-8}" stroke="#9ca3af"/>`;
+  });
+  s+=`<line x1="${W-R}" y1="${T}" x2="${W-R}" y2="${HT-8}" stroke="#9ca3af"/>`;
+  for(let p=0;p<=100;p+=10){
+    s+=`<line x1="${L}" y1="${y(p)}" x2="${W-R}" y2="${y(p)}" stroke="${p%20?'#eef0f3':'#c7cbd1'}"/>`;
+    s+=`<text x="${L-8}" y="${y(p)+4}" text-anchor="end" font-size="${p%20?10:12}" ${p%20?'':'font-weight="700"'} fill="${p%20?'#9ca3af':'#374151'}">${p}</text>`;
+    if(p%20===0) s+=`<text x="${W-R+6}" y="${y(p)+4}" text-anchor="start" font-size="10" fill="#9ca3af">${p/20+1}</text>`;
+  }
+  s+=`<text x="16" y="${(T+H-B)/2}" font-size="12" fill="#374151" transform="rotate(-90 16 ${(T+H-B)/2})" text-anchor="middle">正答率（%）</text>`;
+  s+=`<text x="${W-8}" y="${(T+H-B)/2}" font-size="11" fill="#9ca3af" transform="rotate(90 ${W-8} ${(T+H-B)/2})" text-anchor="middle">段階（まんがの説明）</text>`;
+  ITEMS.forEach((it,i)=>{
+    s+=`<text x="${x(i)}" y="${H-B+14}" text-anchor="middle" font-size="11" fill="#6b7280">${i+1}</text>`;
+    s+=`<text transform="translate(${x(i)+4},${H-B+24}) rotate(90)" font-size="11.5" fill="#374151">${it[1]}${it[3]==="stage"?'(段階)':''}</text>`;
+  });
+  // 基準線（灰色：平均＝実線、−1SD＝破線）
+  [["mean",""],["sd",'stroke-dasharray="5 3"']].forEach(([k,da])=>{
+    segments(i=>{ const p=normP(k,i); return p===null?null:`${x(i)},${y(p)}`; }).forEach(sg=>{ s+=`<polyline points="${sg.join(" ")}" fill="none" stroke="#6b7280" stroke-width="2" ${da} stroke-linejoin="round" opacity=".85"/>`; });
+    ITEMS.forEach((_,i)=>{ const p=normP(k,i); if(p!==null) s+=`<line x1="${x(i)-6}" y1="${y(p)}" x2="${x(i)+6}" y2="${y(p)}" stroke="#6b7280" stroke-width="2" ${da}/>`; });
+  });
+  for(let e=0;e<NE;e++){
+    const c=COLORS[e];
+    segments(i=>{ const r=evalCell(e,i); return okR(r)?`${x(i)},${y(r.p)}`:null; }).forEach(sg=>{
+      s+=`<polyline points="${sg.join(" ")}" fill="none" stroke="${c}" stroke-width="2.5" ${DASH[e]} stroke-linejoin="round"/>`; });
+    ITEMS.forEach((it,i)=>{
+      const r=evalCell(e,i); if(!okR(r)) return;
+      let tip=`評価${e+1} ${it[1]}：`;
+      if(r.t==="stage") tip+=`段階${r.v}（${stName(String(r.v))}）`;
+      else if(i===FLU) tip+=`${r.v}語（上限${r.n}）`;
+      else tip+=`正答${r.c}/${r.n}（${Math.round(r.p)}%）`;
+      if(r.cnt&&r.t==="items") tip+=`\n段階別：${cntText(r.cnt)}`;
+      if(r.hash) tip+="（正答数のみ）";
+      s+=`<g>${marker(e,x(i),y(r.p))}<title>${esc(tip)}</title></g>`;
+    });
+  }
+  // 下段：段階別件数
+  const ce=cntEval, T2=H+10, rh=16, top=T2+20;
+  s+=`<text x="${L}" y="${T2+12}" font-size="12.5" font-weight="700" fill="#374151">段階別件数　評価${ce+1}（${fmtDate(state.dates[ce])}）</text>`;
+  s+=`<text x="${W-R}" y="${T2+12}" text-anchor="end" font-size="10" fill="#6b7280">${esc(STAGES.map(k=>`${k} ${stName(k)}`).join("／"))}</text>`;
+  const labels=[...STAGES,"中止"];
+  labels.forEach((lb,j)=>{
+    const yy=top+rh*j;
+    s+=`<rect x="${L}" y="${yy}" width="${W-L-R}" height="${rh}" fill="${j<2?'#effaf8':j===6?'#f3f4f6':'#fffaf3'}"/>`;
+    s+=`<text x="${L-6}" y="${yy+12}" text-anchor="end" font-size="11" fill="#374151">${lb}</text>`;
+    s+=`<line x1="${L}" y1="${yy}" x2="${W-R}" y2="${yy}" stroke="#d1d5db"/>`;
+  });
+  s+=`<line x1="${L}" y1="${top+rh*7}" x2="${W-R}" y2="${top+rh*7}" stroke="#d1d5db"/>`;
+  s+=`<line x1="${L}" y1="${top+rh*2}" x2="${W-R}" y2="${top+rh*2}" stroke="#6b7280"/>`;
+  ITEMS.forEach((it,i)=>{
+    if(i>0) s+=`<line x1="${L+cw*i}" y1="${top}" x2="${L+cw*i}" y2="${top+rh*7}" stroke="#e5e7eb"/>`;
+    const r=evalCell(ce,i);
+    if(!r||(r.bad&&!r.cnt)) return;
+    if(!r.cnt){ s+=`<text x="${x(i)}" y="${top+rh*3+12}" text-anchor="middle" font-size="10" fill="#9ca3af">${r.hash?"正答数":"—"}</text>`; if(r.hash) s+=`<text x="${x(i)}" y="${top+rh*4+12}" text-anchor="middle" font-size="10" fill="#9ca3af">のみ</text>`; return; }
+    [...STAGES,"x"].forEach((k,j)=>{
+      const v=r.cnt[k];
+      s+=`<text x="${x(i)}" y="${top+rh*j+12}" text-anchor="middle" font-size="11" ${v?'font-weight="700" fill="#111"':'fill="#c0c4cc"'}>${v}</text>`;
+    });
+  });
+  s+=`</svg>`;
+  return s;
+}
+function drawChart(){ document.getElementById("chart").innerHTML=chartSVG(false); }
+function esc(t){return String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+
+// ===== まとめ =====
+function domainAvg(e,g){
+  const ps=[]; ITEMS.forEach((it,i)=>{ if(it[0]!==g) return; const r=evalCell(e,i); if(okR(r)) ps.push(r.p); });
+  return ps.length?{avg:ps.reduce((a,b)=>a+b,0)/ps.length,n:ps.length,of:ITEMS.filter(it=>it[0]===g).length}:null;
+}
+function evalStats(e){
+  let abort=0, none=0;
+  ITEMS.forEach((_,i)=>{ const r=evalCell(e,i); if(!r) none++; else if(r.cnt) abort+=r.cnt.x; });
+  return {abort,none};
+}
+function summaryRows(){
+  const rows=[];
+  GROUPS.forEach(g=>{
+    const cells=[]; let prev=null;
+    for(let e=0;e<NE;e++){
+      if(!hasData(e)){ cells.push({t:"—"}); continue; }
+      const a=domainAvg(e,g);
+      if(!a){ cells.push({t:"未実施"}); continue; }
+      const v=Math.round(a.avg); let d=null;
+      if(prev!==null) d=v-prev;
+      prev=v; cells.push({t:`${v}%`,d,sub:a.n<a.of?`${a.n}/${a.of}項目`:""});
+    }
+    rows.push({label:g,cells});
+  });
+  const ab=[],no=[],er=[];
+  for(let e=0;e<NE;e++){
+    if(!hasData(e)){ ab.push({t:"—"}); no.push({t:"—"}); er.push({t:"—"}); continue; }
+    const st=evalStats(e); ab.push({t:`${st.abort}マス`}); no.push({t:`${st.none}項目`}); er.push({t:errTally(e)||"なし"});
+  }
+  rows.push({label:"中止した問題",cells:ab},{label:"未実施の下位検査",cells:no},{label:"誤りの種類（メモより）",cells:er});
+  return rows;
+}
+function renderSummary(){
+  const cols=EV.filter(e=>e===0||hasData(e));
+  let h=`<thead><tr><th style="text-align:left">領域</th>`;
+  for(const e of cols) h+=`<th class="e${e+1}"><span class="dot"></span>評価${e+1}<br><span class="sm">${state.dates[e]?fmtDate(state.dates[e]):""}</span></th>`;
+  h+=`</tr></thead><tbody>`;
+  summaryRows().forEach(r=>{
+    h+=`<tr><td>${r.label}</td>`;
+    r.cells.forEach((c,e)=>{ if(!cols.includes(e)) return;
+      let d="";
+      if(c.d!==null&&c.d!==undefined){ const cls=c.d>0?"up":c.d<0?"down":"same"; d=` <span class="${cls}">（${c.d>0?"↑+":c.d<0?"↓":"→"}${c.d}）</span>`; }
+      h+=`<td>${esc(c.t)}${d}${c.sub?`<br><span class="sm">${c.sub}</span>`:""}</td>`;
+    });
+    h+=`</tr>`;
+  });
+  document.getElementById("sumTbl").innerHTML=h+"</tbody>";
+}
+
+// ===== 患者情報・検査情報 =====
+function parseD(s){ if(!s||!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null; const [y,m,d]=s.split("-").map(Number); return {y,m,d,t:Date.UTC(y,m-1,d)}; }
+function ageAt(b,d){ const B=parseD(b),D=parseD(d); if(!B||!D||D.t<B.t) return null; let a=D.y-B.y; if(D.m<B.m||(D.m===B.m&&D.d<B.d)) a--; return a; }
+function sinceOnset(o,d){
+  const O=parseD(o),D=parseD(d); if(!O||!D||D.t<O.t) return null;
+  const days=Math.round((D.t-O.t)/86400000);
+  // 検査日がその月の末日なら、発症日の「日」が大きくても1か月とみなす（1/31→2/28 を1か月）
+  const lastDay=new Date(D.y,D.m,0).getDate();
+  let mo=(D.y-O.y)*12+(D.m-O.m); if(D.d<O.d && D.d<lastDay) mo--;
+  return {days,months:mo};
+}
+function minutes(a,b){ if(!/^\d{2}:\d{2}$/.test(a||"")||!/^\d{2}:\d{2}$/.test(b||"")) return null; const f=s=>+s.slice(0,2)*60+ +s.slice(3); let m=f(b)-f(a); return m<0?null:m; } // 終了が開始より前なら打ち間違いとみなして空欄
+function todayStr(){ const t=new Date(); return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")}`; }
+function examCalc(e,st){
+  st=st||state; const x=st.exams[e];
+  return {min:minutes(x.start,x.end), since:sinceOnset(st.info.onset,st.dates[e]), age:ageAt(st.info.birth,st.dates[e])};
+}
+function buildExam(){
+  const tb=document.getElementById("examBody"); let h="";
+  for(let e=0;e<NE;e++){
+    h+=`<tr><td class="e${e+1}"><span class="dot"></span>評価${e+1}</td>
+      <td><input type="date" class="dt" data-e="${e}"></td>
+      <td><input type="text" data-exam="examiner" data-e="${e}" placeholder="検査者"></td>
+      <td><input type="time" data-exam="start" data-e="${e}"></td>
+      <td><input type="time" data-exam="end" data-e="${e}"></td>
+      <td id="dur${e}"></td><td id="since${e}"></td><td id="agee${e}"></td></tr>`;
+  }
+  tb.innerHTML=h;
+}
+function syncInfo(){
+  document.querySelectorAll("[data-info]").forEach(el=>{ el.value=state.info[el.dataset.info]||""; });
+  document.querySelectorAll("[data-exam]").forEach(el=>{ el.value=state.exams[+el.dataset.e][el.dataset.exam]||""; });
+  document.querySelectorAll("input.dt").forEach(el=>{ el.value=state.dates[+el.dataset.e]||""; });
+  updateInfoCalc();
+}
+function updateInfoCalc(){
+  const a=ageAt(state.info.birth,todayStr());
+  document.getElementById("ageOut").textContent=a===null?"—":`${a}歳`;
+  for(let e=0;e<NE;e++){
+    const c=examCalc(e);
+    document.getElementById("dur"+e).textContent=c.min===null?"":`${c.min}分`;
+    document.getElementById("since"+e).textContent=c.since?`${c.since.days}日（${c.since.months}か月）`:"";
+    document.getElementById("agee"+e).textContent=c.age===null?"":`${c.age}歳`;
+  }
+  const bits=[]; if(state.info.sex) bits.push(state.info.sex); if(a!==null) bits.push(a+"歳"); if(state.info.disease) bits.push(state.info.disease);
+  document.getElementById("infoSum").textContent=bits.length?bits.join("・"):"（開いて入力）";
+}
+
+// ===== 設定パネル =====
+function buildSettings(){
+  document.getElementById("stNames").innerHTML=STAGES.map(k=>`<label class="f">段階${k}<input type="text" data-st="${k}" value="${esc(settings.stageNames[k])}"></label>`).join("");
+  document.querySelectorAll('input[name=join]').forEach(r=>{ r.checked=(r.value==="join")===settings.join; });
+  document.getElementById("fluMax").value=settings.fluencyMax;
+  document.getElementById("normBody").innerHTML=ITEMS.map((it,i)=>`<tr><td>${i+1}</td><td>${it[0]}・${it[1]}</td><td class="sm">${it[3]==="stage"?"段階":"%"}</td>
+    <td><input type="text" inputmode="decimal" data-norm="mean" data-i="${i}" value="${esc(settings.norm.mean[i])}" aria-label="No.${i+1} 平均"></td>
+    <td><input type="text" inputmode="decimal" data-norm="sd" data-i="${i}" value="${esc(settings.norm.sd[i])}" aria-label="No.${i+1} −1SD"></td></tr>`).join("");
+  document.querySelectorAll("[data-norm]").forEach(markNorm);
+}
+function markNorm(el){ const v=el.value.trim(); el.classList.toggle("bad", v!==""&&normP(el.dataset.norm,+el.dataset.i)===null); }
+function bindSettings(){
+  const card=document.getElementById("setCard");
+  card.addEventListener("input",ev=>{
+    const el=ev.target;
+    if(el.dataset.st){ settings.stageNames[el.dataset.st]=el.value.slice(0,30); saveSettings(); renderTabs(); buildTable(); refresh(); return; }
+    if(el.name==="join"){ settings.join=el.value==="join"; saveSettings(); drawChart(); return; }
+    if(el.id==="fluMax"){ const v=toNum(el.value), ok=v!==null&&Number.isInteger(v)&&v>0&&v<=200; el.classList.toggle("bad",!ok); if(ok){ settings.fluencyMax=v; saveSettings(); } return; }
+    if(el.dataset.norm){ settings.norm[el.dataset.norm][+el.dataset.i]=el.value.trim(); markNorm(el); saveSettings(); drawChart(); }
+  });
+  card.addEventListener("change",ev=>{ if(ev.target.name==="join"){ settings.join=ev.target.value==="join"; saveSettings(); drawChart(); } });
+  document.getElementById("btnStReset").onclick=()=>{ settings.stageNames=Object.assign({},DEF_STAGE_NAMES); saveSettings(); buildSettings(); renderTabs(); buildTable(); refresh(); toast("段階の名称を初期値に戻しました"); };
+  let armed=false,tm=null;
+  document.getElementById("btnNormClear").onclick=function(){
+    if(!armed){ armed=true; this.textContent="本当に消す？"; tm=setTimeout(()=>{armed=false;this.textContent="基準線の値をすべて消す";},3000); return; }
+    clearTimeout(tm); armed=false; this.textContent="基準線の値をすべて消す";
+    settings.norm={mean:ITEMS.map(()=>""),sd:ITEMS.map(()=>"")}; saveSettings(); buildSettings(); drawChart(); toast("基準線の値を消しました");
+  };
+  // 基準値をまとめて読み込む（貼り付け または .txt ファイル。ブラウザの中で読むだけ）
+  const fileIn=document.getElementById("normFile");
+  fileIn.addEventListener("change",()=>{
+    const f=fileIn.files&&fileIn.files[0]; if(!f) return;
+    if(f.size>200000){ toast("ファイルが大きすぎます"); fileIn.value=""; return; }
+    const rd=new FileReader();
+    rd.onload=()=>{ document.getElementById("normText").value=String(rd.result||""); fileIn.value=""; showNormPreview(); };
+    rd.onerror=()=>{ toast("ファイルを読めませんでした"); fileIn.value=""; };
+    rd.readAsText(f,"utf-8");
+  });
+  document.getElementById("btnNormParse").onclick=showNormPreview;
+  document.getElementById("btnNormCancel").onclick=hideNormPreview;
+  document.getElementById("btnNormApply").onclick=()=>{
+    if(!normPending) return;
+    let n=0;
+    normPending.forEach((r,i)=>{ if(!r||r.err) return; settings.norm.mean[i]=r.mean; settings.norm.sd[i]=r.sd; n++; });
+    saveSettings(); hideNormPreview(); document.getElementById("normText").value="";
+    buildSettings(); drawChart(); toast(`基準線を${n}項目に反映しました`);
+  };
+}
+// 素点 → グラフの単位（items・計算・語の列挙は正答率%、まんがは段階）。範囲外は null
+function rawToNorm(i,v){
+  if(v===null) return null;
+  const it=ITEMS[i];
+  if(it[3]==="stage") return (v>=1&&v<=6)?v:null;
+  if(v<0) return null;
+  if(i===FLU) return Math.min(v,FLU_OFFICIAL)/FLU_OFFICIAL*100;
+  if(v>it[2]) return null;
+  return v/it[2]*100;
+}
+function r1(x){ return String(Math.round(x*10)/10); }
+// 貼り付けた文字を読む。戻り値：26項目の配列（行が無い項目は null）と、読めなかった行
+function parseNormText(text){
+  const out=ITEMS.map(()=>null), bad=[];
+  String(text).split(/\r\n|\r|\n/).forEach((line,ln)=>{
+    const t=zen2han(line).replace(/[．]/g,".").replace(/^﻿/,"").trim();
+    if(!t||t[0]==="#"||t[0]==="＃") return;
+    const a=t.split(/[\t ,，、　]+/).filter(x=>x!=="");
+    const no=toNum(a[0]), m=toNum(a[1]), s=toNum(a[2]);
+    if(no===null||!Number.isInteger(no)||no<1||no>ITEMS.length||a.length<3){ bad.push(`${ln+1}行目`); return; }
+    const i=no-1, pm=rawToNorm(i,m), ps=rawToNorm(i,s);
+    out[i]= (pm===null||ps===null) ? {err:true,rm:a[1],rs:a[2]} : {rm:m,rs:s,mean:r1(pm),sd:r1(ps)};
+  });
+  return {rows:out,bad};
+}
+let normPending=null;
+function showNormPreview(){
+  const {rows,bad}=parseNormText(document.getElementById("normText").value);
+  const ok=rows.filter(r=>r&&!r.err).length, ng=rows.filter(r=>r&&r.err).length;
+  const msg=document.getElementById("normMsg");
+  if(!ok){ hideNormPreview(); msg.textContent="読み込める行がありませんでした。形式を確認してください。"; return; }
+  normPending=rows;
+  const unit=i=>ITEMS[i][3]==="stage"?"段階":"%";
+  document.getElementById("normPrevBody").innerHTML=ITEMS.map((it,i)=>{
+    const r=rows[i];
+    if(!r) return `<tr class="skip"><td>${i+1}</td><td>${it[0]}・${it[1]}</td><td colspan="4">行がありません（今の値のまま：${esc(settings.norm.mean[i]||"—")}／${esc(settings.norm.sd[i]||"—")}）</td></tr>`;
+    if(r.err) return `<tr class="err"><td>${i+1}</td><td>${it[0]}・${it[1]}</td><td>${esc(r.rm)}</td><td>${esc(r.rs)}</td><td colspan="2">範囲外のため読み込みません</td></tr>`;
+    const u=ITEMS[i][3]==="stage"?"段階 ":"";
+    return `<tr><td>${i+1}</td><td>${it[0]}・${it[1]}</td><td>${r.rm}</td><td>${r.rs}</td><td class="chg">${u}${r.mean}${unit(i)==="%"?"%":""}</td><td class="chg">${u}${r.sd}${unit(i)==="%"?"%":""}</td></tr>`;
+  }).join("");
+  document.getElementById("normPrev").style.display="";
+  msg.textContent=`${ok}項目を読み取りました${ng?`（範囲外 ${ng}項目）`:""}${bad.length?`。読めなかった行：${bad.slice(0,5).join("・")}${bad.length>5?"…":""}`:""}。内容を確かめて「反映する」を押してください。`;
+}
+function hideNormPreview(){ normPending=null; document.getElementById("normPrev").style.display="none"; document.getElementById("normPrevBody").innerHTML=""; document.getElementById("normMsg").textContent=""; }
+
+// ===== 印刷 =====
+function updatePrintHead(){
+  document.getElementById("phName").textContent=state.name||"（未入力）";
+  const inf=state.info, a=ageAt(inf.birth,todayStr()), bits=[];
+  if(inf.sex) bits.push(inf.sex); if(a!==null) bits.push(a+"歳"); if(inf.hand) bits.push("利き手 "+inf.hand);
+  if(inf.disease) bits.push(inf.disease); if(inf.onset) bits.push("発症 "+fmtDate(inf.onset)); if(inf.paralysis) bits.push("麻痺 "+inf.paralysis);
+  document.getElementById("phInfo").textContent=bits.join("　");
+  const parts=[];
+  for(let e=0;e<NE;e++) if(hasData(e)||state.dates[e]){
+    const c=examCalc(e), x=state.exams[e];
+    let t=`評価${e+1}：${fmtDate(state.dates[e])}`;
+    if(x.examiner) t+=` 検査者 ${x.examiner}`; if(c.min!==null) t+=` ${c.min}分`; if(c.since) t+=` 発症から${c.since.days}日（${c.since.months}か月）`;
+    parts.push(t);
+  }
+  document.getElementById("phDates").textContent=parts.join("　／　");
+  const t=new Date();
+  document.getElementById("phPrinted").textContent=`${t.getFullYear()}/${String(t.getMonth()+1).padStart(2,"0")}/${String(t.getDate()).padStart(2,"0")}`;
+}
+function mcHtml(v){ return `<span class="mc${/^[1-6x]$/.test(v)?" s"+v:""}">${v==="x"?"中":v==="-"?"":esc(v)}</span>`; }
+function buildPrintDetail(){
+  let h="";
+  for(let e=0;e<NE;e++){
+    if(!hasData(e)) continue;
+    h+=`<section><h3>評価${e+1}（${fmtDate(state.dates[e])}${state.exams[e].examiner?"・検査者 "+esc(state.exams[e].examiner):""}）入力の記録</h3><table><thead><tr><th>No.</th><th>下位検査</th><th>記録</th><th>結果</th><th>段階別件数</th><th>誤りの種類</th></tr></thead><tbody>`;
+    ITEMS.forEach((it,i)=>{
+      const r=evalCell(e,i), raw=state.scores[e][i];
+      let rec="", res="", cn="";
+      if(r){
+        if(r.seq) rec=r.seq.split("").map(mcHtml).join("");
+        else if(r.hash) rec="正答数のみ";
+        else if(it[3]==="stage") rec=mcHtml(zen2han(raw).toLowerCase());
+        else if(i===CALC&&state.calc[e].some(x=>x!=="")) rec=CALC_SHORT.map((s,j)=>`${s}${state.calc[e][j]||"−"}`).join(" ");
+        else rec=esc(raw);
+        res = r.bad&&!r.seq ? esc(r.msg) : it[3]==="stage" ? (r.abort?"中止":`段階${r.v}`) : i===FLU ? `${r.v}語` : `正答${r.c}/${r.n} ${Math.round(r.p)}%`;
+        if(r.cnt&&r.t==="items") cn=cntText(r.cnt);
+      }else rec='<span class="muted">未実施</span>';
+      h+=`<tr><td>${i+1}</td><td>${it[0]}・${it[1]}</td><td>${rec}</td><td>${res}</td><td>${cn}</td><td>${esc(errTally(e,i))}</td></tr>`;
+    });
+    h+=`</tbody></table>`;
+    const keys=Object.keys(state.notes[e]).sort((a,b)=>{const [ai,ak]=a.split("-").map(Number),[bi,bk]=b.split("-").map(Number); return ai-bi||ak-bk;});
+    if(keys.length){
+      h+=`<h3>評価${e+1} 問題ごとのメモ</h3><table><thead><tr><th>No.</th><th>下位検査</th><th>問題</th><th>記録</th><th>実際の反応</th><th>誤りの種類</th><th>ヒント</th><th>自己修正</th><th>遅れ</th></tr></thead><tbody>`;
+      keys.forEach(k=>{ const [i,q]=k.split("-").map(Number), n=state.notes[e][k], it=ITEMS[i]; if(!it) return;
+        const s=state.scores[e][i], v=it[3]==="stage"?(s||"-"):(/^[1-6x\-]*$/.test(s)?(s[q]||"-"):"-");
+        h+=`<tr><td>${i+1}</td><td>${it[1]}</td><td>${it[3]==="stage"?"":q+1}</td><td>${mcHtml(v)}</td><td>${esc(n.resp)}</td><td>${esc(n.types.join("・"))}</td><td>${n.hint?"○":""}</td><td>${n.self?"○":""}</td><td>${n.delay?"○":""}</td></tr>`; });
+      h+=`</tbody></table>`;
+    }
+    h+=`</section>`;
+  }
+  document.getElementById("printDetail").innerHTML=h;
+}
+function buildBlank(){
+  const bx=n=>`<span class="bxs">${"<span class=\"bx\"></span>".repeat(n)}</span>`;
+  let h=`<h2>SLTA 記録用紙（白紙）</h2>
+  <p class="bs-leg">段階：${esc(STAGES.map(k=>`${k} ${stName(k)}`).join("／"))}／中止は「×」。段階6と5が正答。作成：KENTA SHINKAWA</p>
+  <table class="bs-info"><tr><td class="k">氏名・ID</td><td></td><td class="k">性別</td><td></td><td class="k">生年月日</td><td></td><td class="k">年齢</td><td></td></tr>
+  <tr><td class="k">原因疾患</td><td colspan="3"></td><td class="k">発症日</td><td></td><td class="k">利き手</td><td></td></tr>
+  <tr><td class="k">麻痺</td><td></td><td class="k">聴力</td><td></td><td class="k">教育年数</td><td></td><td class="k">職業</td><td></td></tr>
+  <tr><td class="k">合併症</td><td colspan="3"></td><td class="k">備考</td><td colspan="3"></td></tr>
+  <tr><td class="k">検査日</td><td></td><td class="k">検査者</td><td></td><td class="k">開始〜終了</td><td>　　：　　〜　　：</td><td class="k">評価回</td><td>第1回・第2回・第3回・第4回・第5回</td></tr></table>
+  <table class="bs-main"><thead><tr><th>領域</th><th>No.</th><th>下位検査</th><th>記録（1問ずつ段階）</th><th>正答数</th><th class="memo">メモ（反応・誤りの種類・ヒント・自己修正）</th></tr></thead><tbody>`;
+  ITEMS.forEach((it,i)=>{
+    const n=state.max[i]; let rec, sc;
+    if(it[3]==="items"){ rec=bx(n); sc=`　　/${n}`; }
+    else if(it[3]==="stage"){ rec=bx(1)+" 段階（1〜6）"; sc="段階"; }
+    else if(i===FLU){ rec="　　　　語"; sc="　　語"; }
+    else{ rec=CALC_SHORT.map(s=>`${s} <span class="bx"></span>/${CALC_EACH}`).join("　"); sc=`　　/${n}`; }
+    h+=`<tr><td>${it[0]}</td><td>${i+1}</td><td class="l">${it[1]}</td><td class="l">${rec}</td><td>${sc}</td><td class="memo"></td></tr>`;
+  });
+  document.getElementById("blankSheet").innerHTML=h+`</tbody></table>`;
+}
+function doPrint(){ closePicker(); updatePrintHead(); buildPrintDetail(); window.print(); }
+function printBlank(){
+  closePicker(); buildBlank(); document.body.classList.add("blank");
+  const off=()=>{ document.body.classList.remove("blank"); window.removeEventListener("afterprint",off); };
+  window.addEventListener("afterprint",off);
+  window.print();
+  setTimeout(off,1500);
+}
+
+// ===== ファイル保存 =====
+function ymd(d){ return d.getFullYear()+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0"); }
+function toast(t){const el=document.getElementById("toast");el.textContent=t;el.classList.add("on");clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove("on"),2200);}
+function fileBase(){
+  const nm=(state.name.trim()||"対象者未入力").replace(/[\\/:*?"<>|\s\u0000-\u001f]/g,"_");
+  const ds=state.dates.filter(d=>d).sort();
+  const d=ds.length?ds[ds.length-1].replace(/-/g,""):ymd(new Date());
+  return `SLTA_${nm}_${d}`;
+}
+function pngName(){ return fileBase()+".png"; }
+function csvName(){ return fileBase()+".csv"; }
+// Excelで数式として動かないよう、= + - @ で始まる文字（数字以外）は先頭に ' を付ける
+function csvCell(v){
+  let t=(v===null||v===undefined)?"":String(v);
+  if(/^[=+\-@\t\r]/.test(t) && toNum(t)===null) t="'"+t;
+  return '"'+t.replace(/"/g,'""')+'"';
+}
+function csvText(){
+  const rows=[], inf=state.info, sl=k=>`段階${k}(${stName(k)})`;
+  rows.push(["SLTA 記録","作成：KENTA SHINKAWA"]);
+  rows.push(["氏名またはID",state.name]);
+  const age=ageAt(inf.birth,todayStr());
+  [["性別",inf.sex],["生年月日",fmtD(inf.birth)],["年齢(今日時点)",age===null?"":age],["原因疾患",inf.disease],["発症日",fmtD(inf.onset)],["利き手",inf.hand],["麻痺",inf.paralysis],["聴力",inf.hearing],["教育年数",inf.edu],["職業",inf.job],["合併症",inf.comp],["備考",inf.memo]].forEach(r=>rows.push(r));
+  rows.push([]);
+  rows.push(["評価","検査日","検査者","開始","終了","所要時間(分)","発症からの日数","発症からの月数","検査時年齢"]);
+  for(let e=0;e<NE;e++){ const c=examCalc(e), x=state.exams[e];
+    rows.push([`評価${e+1}`,fmtD(state.dates[e]),x.examiner,x.start,x.end,c.min===null?"":c.min,c.since?c.since.days:"",c.since?c.since.months:"",c.age===null?"":c.age]); }
+  rows.push([]);
+  const head=["No","領域","下位検査","問題数(満点)"];
+  for(let e=1;e<=NE;e++){ head.push(`評価${e} 入力`,`評価${e} 正答数`,`評価${e} 正答率(%)`); STAGES.forEach(k=>head.push(`評価${e} ${sl(k)}`)); head.push(`評価${e} 中止`); }
+  rows.push(head);
+  ITEMS.forEach((it,i)=>{
+    const r=[i+1,it[0],it[1],it[3]==="stage"?"段階1〜6":state.max[i]];
+    for(let e=0;e<NE;e++){
+      const raw=state.scores[e][i], p=evalCell(e,i);
+      let inp=raw;
+      if(p&&!(p.bad&&!p.seq)){
+        if(p.seq) inp=p.seq.split("").map(c=>c==="x"?"中":c).join(" ");
+        else if(p.hash) inp="#"+p.c;
+        else if(p.abort) inp="中止";
+        else inp=p.v;
+      }
+      r.push(inp);
+      if(!p||(p.bad&&!p.seq)) r.push("","");
+      else if(p.t==="stage") r.push(p.abort?"中止":"段階"+p.v,"");
+      else r.push(p.c,Math.round(p.p));
+      if(p&&p.cnt){ STAGES.forEach(k=>r.push(p.cnt[k])); r.push(p.cnt.x); } else for(let q=0;q<7;q++) r.push("");
+    }
+    rows.push(r);
+  });
+  rows.push([]);
+  rows.push(["計算の内訳","",...CALC_NAMES,"合計"]);
+  for(let e=0;e<NE;e++) rows.push([`評価${e+1}`,"",...state.calc[e],state.scores[e][CALC]]);
+  rows.push([]);
+  rows.push(["誤りの種類の集計","",...EV.map(e=>`評価${e+1}`)]);
+  ITEMS.forEach((it,i)=>{ const t=EV.map(e=>errTally(e,i)); if(t.some(x=>x)) rows.push([i+1,it[1],...t]); });
+  rows.push(["全体","",...EV.map(e=>errTally(e))]);
+  rows.push([]);
+  rows.push(["問題ごとのメモ"]);
+  rows.push(["評価","No","下位検査","問題番号","記録","実際の反応","誤りの種類","ヒントあり","自己修正","遅れ"]);
+  for(let e=0;e<NE;e++){
+    Object.keys(state.notes[e]).sort((a,b)=>{const [ai,ak]=a.split("-").map(Number),[bi,bk]=b.split("-").map(Number); return ai-bi||ak-bk;}).forEach(k=>{
+      const [i,q]=k.split("-").map(Number), n=state.notes[e][k], it=ITEMS[i]; if(!it) return;
+      const s=state.scores[e][i], v=it[3]==="stage"?s:(/^[1-6x\-]*$/.test(s)?(s[q]||""):"");
+      rows.push([`評価${e+1}`,i+1,it[1],it[3]==="stage"?"":q+1,v==="x"?"中止":v==="-"?"":v,n.resp,n.types.join("・"),n.hint?"○":"",n.self?"○":"",n.delay?"○":""]);
+    });
+  }
+  return rows.map(r=>r.map(csvCell).join(",")).join("\r\n")+"\r\n";
+}
+function fmtD(d){ return d?d.replace(/-/g,"/"):""; }
+function saveCsv(){
+  try{
+    const blob=new Blob(["﻿"+csvText()],{type:"text/csv;charset=utf-8"});
+    offerFile(blob,csvName(),"CSVを保存しました");
+  }catch(e){ toast("CSVを作れませんでした"); }
+}
+// ファイルを保存する。claude.ai の公開ページでは専用の保存機能（確認画面が出る）、それ以外はふつうのダウンロード
+async function offerFile(blob,name,okMsg){
+  let dl=null;
+  if(window.claude&&typeof window.claude.use==="function"){ try{ dl=await window.claude.use("downloads"); }catch(e){ dl=null; } }
+  if(dl){
+    try{ await dl.save({filename:name,data:blob}); toast(okMsg); }
+    catch(e){ const c=e&&e.code; toast(c==="declined"?"保存をやめました":c==="rate_limited"?"少し待ってから、もう一度押してください":"この画面では保存できませんでした"); }
+    return;
+  }
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download=name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  toast(okMsg);
+}
+function savePng(){
+  const {W,HT}=CH, sc=2;
+  const blob=new Blob([chartSVG(true)],{type:"image/svg+xml;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const img=new Image();
+  const fail=()=>toast("画像を作れませんでした。お手数ですが「印刷する」をお使いください");
+  img.onload=()=>{
+    try{
+      const cv=document.createElement("canvas"); cv.width=W*sc; cv.height=HT*sc;
+      const ctx=cv.getContext("2d");
+      ctx.fillStyle="#fff"; ctx.fillRect(0,0,cv.width,cv.height);
+      ctx.drawImage(img,0,0,cv.width,cv.height);
+      URL.revokeObjectURL(url);
+      cv.toBlob(b=>{ if(!b){fail();return;} offerFile(b,pngName(),"画像を保存しました"); },"image/png");
+    }catch(e){URL.revokeObjectURL(url);fail();}
+  };
+  img.onerror=()=>{URL.revokeObjectURL(url);fail();};
+  img.src=url;
+}
+
+// ===== データの読み込み画面 =====
+const LOAD_MSG="「データをコピー」または「全員分をコピー」で控えておいた文字列を貼り付けてください。新しい対象者として追加されます（今のデータは上書きされません）。";
+function openModal(text,copyMode){
+  document.getElementById("mTitle").textContent=copyMode?"データを手動でコピー":"データを読み込む";
+  document.getElementById("mMsg").textContent=copyMode?"下の文字列をすべて選んで（Ctrl+A）、コピー（Ctrl+C）してください。":LOAD_MSG;
+  document.getElementById("mOk").style.display=copyMode?"none":"";
+  document.getElementById("mCancel").textContent=copyMode?"閉じる":"やめる";
+  const ta=document.getElementById("loadText"); ta.value=text||"";
+  document.getElementById("modal").classList.add("on"); ta.focus(); if(copyMode) ta.select();
+}
+function closeModal(){ document.getElementById("modal").classList.remove("on"); }
+function syncTop(){ document.getElementById("pname").value=state.name; syncInfo(); }
+
+function bindTop(){
+  const pn=document.getElementById("pname");
+  pn.addEventListener("input",()=>{state.name=pn.value;save();drawChart();updatePrintHead();renderPatients();});
+  document.addEventListener("input",ev=>{
+    const el=ev.target;
+    if(el.classList&&el.classList.contains("dt")){
+      const e=+el.dataset.e; state.dates[e]=el.value; save();
+      document.querySelectorAll(`input.dt[data-e="${e}"]`).forEach(x=>{ if(x!==el) x.value=el.value; });
+      updateInfoCalc(); renderTabs(); afterChange(); renderPatients(); return;
+    }
+    if(el.dataset&&el.dataset.info){ state.info[el.dataset.info]=el.value; save(); updateInfoCalc(); updatePrintHead(); return; }
+    if(el.dataset&&el.dataset.exam){ state.exams[+el.dataset.e][el.dataset.exam]=el.value; save(); updateInfoCalc(); updatePrintHead(); return; }
+  });
+  document.addEventListener("change",ev=>{ const el=ev.target; if(el.tagName==="SELECT"&&el.dataset.info){ state.info[el.dataset.info]=el.value; save(); updateInfoCalc(); updatePrintHead(); } });
+  document.getElementById("btnPrint").onclick=doPrint;
+  document.getElementById("btnBlank").onclick=printBlank;
+  document.getElementById("btnPng").onclick=savePng;
+  document.getElementById("btnCsv").onclick=saveCsv;
+  document.getElementById("btnMemo").onclick=()=>{
+    if(lastCell&&lastCell.e===curEval&&cellAt(lastCell.i,lastCell.k)) openNote(lastCell.i,lastCell.k);
+    else toast("先に、メモを付けるマスを選んでください");
+  };
+  document.getElementById("picker").addEventListener("click",pickerClick);
+  document.getElementById("picker").addEventListener("keydown",ev=>{ if(ev.key==="Escape"&&pk){ const el=pk.el; closePicker(); focusEl(el); } });
+  document.addEventListener("pointerdown",ev=>{ if(!pk) return; if(ev.target.closest("#picker")||ev.target.closest("#tbl .cell")) return; closePicker(); });
+  window.addEventListener("resize",closePicker);
+  const copyText=async(text,msg)=>{
+    try{await navigator.clipboard.writeText(text); toast(msg);}
+    catch(e){openModal(text,true);toast("自動コピーできないため、下の文字列を手動でコピーしてください");}
+  };
+  document.getElementById("btnCopy").onclick=()=>copyText(JSON.stringify(plain(state)),"この対象者のデータをコピーしました");
+  document.getElementById("btnCopyAll").onclick=()=>copyText(JSON.stringify(db),`全員分（${Object.keys(db.patients).length}人）をコピーしました`);
+  // 対象者が変わったら「本当に削除する？」「本当に消す？」の待ち状態を取り消す（別の人を1回押しで消さないため）
+  function disarm(){
+    clearTimeout(delTimer); delArmed=false; document.getElementById("btnDel").textContent="この対象者を削除";
+    clearTimeout(timer); armed=false; document.getElementById("btnClear").textContent="クリア";
+  }
+  document.getElementById("psel").addEventListener("change",ev=>{ disarm(); selectPatient(ev.target.value); persist(); init(); });
+  document.getElementById("btnNew").onclick=()=>{
+    disarm(); selectPatient(addPatient(null)); persist(); init(); toast("新しい対象者を作りました");
+    document.getElementById("pname").focus();
+  };
+  let delArmed=false, delTimer=null;
+  document.getElementById("btnDel").onclick=function(){
+    if(!delArmed){delArmed=true;this.textContent="本当に削除する？";delTimer=setTimeout(()=>{delArmed=false;this.textContent="この対象者を削除";},3000);return;}
+    clearTimeout(delTimer); delArmed=false; this.textContent="この対象者を削除";
+    const ids=Object.keys(db.patients), pos=ids.indexOf(db.current);
+    delete db.patients[db.current];
+    const rest=Object.keys(db.patients);
+    selectPatient(rest.length ? rest[Math.min(pos,rest.length-1)] : addPatient(null));
+    persist(); init(); toast("削除しました");
+  };
+  document.getElementById("btnLoad").onclick=()=>openModal("");
+  document.getElementById("mCancel").onclick=closeModal;
+  document.getElementById("modal").addEventListener("click",ev=>{ if(ev.target.id==="modal") closeModal(); });
+  document.getElementById("noteModal").addEventListener("click",ev=>{ if(ev.target.id==="noteModal") closeNote(); });
+  document.getElementById("nOk").onclick=()=>saveNote(false);
+  document.getElementById("nDel").onclick=()=>saveNote(true);
+  document.getElementById("nCancel").onclick=closeNote;
+  document.addEventListener("keydown",ev=>{
+    if(ev.key!=="Escape") return;
+    if(document.getElementById("modal").classList.contains("on")) closeModal();
+    if(document.getElementById("noteModal").classList.contains("on")) closeNote();
+  });
+  document.getElementById("mOk").onclick=()=>{
+    try{const o=JSON.parse(document.getElementById("loadText").value);
+      if(!o||typeof o!=="object"||Array.isArray(o)) throw 0;
+      let firstId=null, count=0;
+      if("patients" in o){
+        const d=normDb(o); if(!d) throw 0;
+        const order=[d.current, ...Object.keys(d.patients).filter(k=>k!==d.current)];
+        order.forEach(k=>{ const id=addPatient(d.patients[k],d.patients[k].updated); if(!firstId) firstId=id; count++; });
+      }else{
+        if(!("scores" in o||"max" in o||"name" in o||"dates" in o)) throw 0;
+        firstId=addPatient(o); count=1;
+      }
+      disarm(); selectPatient(firstId); persist(); init(); closeModal();
+      toast(count>1?`${count}人を読み込みました`:"読み込みました（新しい対象者として追加）");}
+    catch(e){toast("読み込めませんでした。文字列を確認してください");}
+  };
+  let armed=false, timer=null;
+  document.getElementById("btnClear").onclick=function(){
+    if(!armed){armed=true;this.textContent="本当に消す？";timer=setTimeout(()=>{armed=false;this.textContent="クリア";},3000);return;}
+    clearTimeout(timer); state=mkPatient(null); db.patients[db.current]=state; save(); armed=false; this.textContent="クリア"; init(); toast("クリアしました");
+  };
+  window.addEventListener("beforeprint",()=>{ updatePrintHead(); if(!document.body.classList.contains("blank")) buildPrintDetail(); });
+}
+function init(){
+  closePicker(); Object.keys(hashEdit).forEach(k=>delete hashEdit[k]); lastCell=null;
+  // 入力中の評価：データのある最後の評価（なければ評価1）
+  curEval=0; for(let e=NE-1;e>=0;e--) if(hasData(e)){ curEval=e; break; }
+  cntEval=curEval;
+  buildTable(); syncTop(); renderTabs(); refresh(); renderPatients();
+}
+loadSettings(); load(); buildExam(); buildSettings(); bindTable(); bindSettings(); bindTop(); init();
+</script>
+</body>
+</html>
