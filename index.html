@@ -258,6 +258,10 @@
     </div>
     <div class="row toolbar">
       <div class="btngroup">
+        <span class="glabel">訓練</span>
+        <button id="btnTrain" class="primary">この人の訓練へ（訓練アプリ）</button>
+      </div>
+      <div class="btngroup">
         <span class="glabel">保存・印刷</span>
         <button id="btnPrint" class="primary">印刷する</button>
         <button id="btnBlank">白紙の記録用紙を印刷</button>
@@ -1526,6 +1530,9 @@ function bindTop(){
     catch(e){openModal(text,true);toast("自動コピーできないため、下の文字列を手動でコピーしてください");}
   };
   document.getElementById("btnCopy").onclick=()=>copyText(JSON.stringify(plain(state)),"この対象者のデータをコピーしました");
+  // 訓練アプリ（同じ場所に公開）へ。この端末の中の保存場所に「どの対象者か」だけを書いて移る。成績は訓練アプリが端末の中から読む（外部には送らない）
+  document.getElementById("btnTrain").onclick=()=>{ try{ save(); localStorage.setItem("slta-handoff-v1",JSON.stringify({prof:db.current,t:Date.now()})); }catch(e){}
+    location.href="../slta-train/"; };
   document.getElementById("btnCopyAll").onclick=()=>copyText(JSON.stringify(db),`全員分（${Object.keys(db.patients).length}人）をコピーしました`);
   // 対象者が変わったら「本当に削除する？」「本当に消す？」の待ち状態を取り消す（別の人を1回押しで消さないため）
   function disarm(){
