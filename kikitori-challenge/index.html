@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ja" data-font="large">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ききとりチャレンジ</title>
+<meta name="author" content="KENTA SHINKAWA">
+<meta name="description" content="聞いて覚える練習（単語・数字・文章）。失語症の方のための言語性短期記憶の練習アプリです。">
+<meta name="theme-color" content="#14284b">
+<meta name="format-detection" content="telephone=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ききとり">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="img/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/icon-192.png">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/print.css">
+</head>
+<body>
+<!-- ききとりチャレンジ  作成：KENTA SHINKAWA -->
+<main id="app" class="app">
+  <div class="boot">
+    <h1>ききとりチャレンジ</h1>
+    <p id="boot-msg">準備しています…</p>
+  </div>
+</main>
+<noscript><p style="padding:1.5rem;font-size:1.25rem">このアプリを使うには、ブラウザの JavaScript を有効にしてください。</p></noscript>
+<script>
+// 読み込みに失敗したとき、何も出ないままにしない
+window.addEventListener('error', function () {
+  var m = document.getElementById('boot-msg');
+  if (m) m.textContent = '読み込みに失敗しました。電波のよいところで、もう一度開いてください。';
+}, true);
+</script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

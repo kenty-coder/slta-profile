@@ -1,0 +1,374 @@
+/* ききとりチャレンジ 画面のスタイル  作成：KENTA SHINKAWA
+   方針: 白地に濃紺の文字＋橙のアクセント1色。全体を rem で組み、
+   文字の大きさ設定は html の font-size を変えるだけで全体に効く。 */
+
+:root {
+  --bg: #f5f3ee;
+  --surface: #ffffff;
+  --ink: #14284b;        /* 濃紺：文字・主ボタン */
+  --ink-soft: #46546e;
+  --line: #b9c0cd;
+  --line-strong: #14284b;
+  --accent: #b84a00;     /* 橙：選んだ印・決定 */
+  --accent-soft: #fff1e3;
+  --focus: #1a73e8;
+  --radius: 0.8rem;
+  --tap: clamp(64px, 3.2rem, 76px);
+  --gap: 0.8rem;
+  --font: "Hiragino Maru Gothic ProN", "ヒラギノ丸ゴ ProN", "BIZ UDPGothic", "BIZ UDGothic", "Yu Gothic UI", "Yu Gothic", "Meiryo", "Noto Sans JP", "Noto Sans CJK JP", system-ui, sans-serif;
+  color-scheme: light;
+}
+
+/* 文字の大きさ（大＝本文20px／特大／最大） */
+html { font-size: 125%; }
+html[data-font="xlarge"] { font-size: 143.75%; }
+html[data-font="xxlarge"] { font-size: 162.5%; }
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { height: 100%; }
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  touch-action: manipulation;
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  font-weight: 500;
+  line-height: 1.5;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  overscroll-behavior: none;
+  word-break: keep-all;      /* 日本語を単語の途中で折り返さない（空白で折る） */
+  overflow-wrap: break-word;
+  line-break: strict;
+  touch-action: manipulation;
+}
+h1, h2, p { margin: 0; }
+h1, h2 { line-height: 1.3; font-weight: 700; }
+h1:focus, h2:focus { outline: none; }
+img { -webkit-user-drag: none; user-select: none; pointer-events: none; max-width: 100%; }
+[hidden] { display: none !important; }
+
+.app {
+  min-height: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.boot { margin: auto; text-align: center; padding: 2rem 1rem; }
+.boot h1 { font-size: 1.6rem; margin-bottom: 1rem; }
+
+/* ---- 画面の枠 ---- */
+.screen {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 46rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding-top: max(1rem, env(safe-area-inset-top, 0px));
+  padding-bottom: max(1.2rem, env(safe-area-inset-bottom, 0px));
+  padding-left: max(1rem, env(safe-area-inset-left, 0px));
+  padding-right: max(1rem, env(safe-area-inset-right, 0px));
+}
+.screen--fixed { height: 100%; min-height: 0; max-width: 64rem; gap: 0.6rem; overflow: hidden; }
+
+.topbar > .btn { white-space: nowrap; flex: none; }
+.topbar { display: flex; align-items: center; gap: var(--gap); min-height: var(--tap); }
+.topbar h1 { font-size: min(1.35rem, 6.4vw); flex: 1 1 auto; min-width: 0; }
+.topbar .spacer { flex: 1 1 auto; }
+
+/* ---- ボタン ---- */
+.btn {
+  appearance: none;
+  font: inherit;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--surface);
+  border: 0.15rem solid var(--line-strong);
+  border-radius: var(--radius);
+  min-height: var(--tap);
+  min-width: var(--tap);
+  padding: 0.5rem 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-align: center;
+  line-height: 1.3;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.btn:active { transform: translateY(1px); background: #e9edf4; }
+.btn:focus-visible, .card:focus-visible, .seg label:focus-within, .tab:focus-visible, input[type="range"]:focus-visible {
+  outline: 0.2rem solid var(--focus);
+  outline-offset: 0.15rem;
+}
+.btn--primary { background: var(--ink); color: #fff; }
+.btn--primary:active { background: #0c1a33; }
+.btn--accent { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn--accent:active { background: #933a00; }
+.btn--quiet { border-color: var(--line); font-weight: 600; }
+.btn--big { font-size: min(1.3rem, 6vw); min-height: max(84px, 4.4rem); padding: 0.8rem 1.2rem; }
+.btn--huge { font-size: 1.5rem; min-height: max(120px, 6.5rem); padding: 1rem 1.4rem; flex-direction: column; }
+.btn--block { width: 100%; }
+.btn--small { font-size: 0.85rem; padding: 0.4rem 0.9rem; }
+.btn[disabled] { opacity: 0.4; cursor: default; }
+.btn svg { width: 1.5em; height: 1.5em; flex: none; }
+.btn--huge svg { width: 2.4em; height: 2.4em; }
+
+/* ---- ホーム ---- */
+.home-title { text-align: center; padding: 0.6rem 0 0.2rem; }
+.home-title h1 { font-size: min(1.9rem, 8.4vw); letter-spacing: 0.04em; white-space: nowrap; }
+.home-title p { color: var(--ink-soft); font-size: 0.95rem; margin-top: 0.2rem; }
+.course-list { display: grid; gap: 1rem; grid-template-columns: 1fr; }
+.course-btn {
+  justify-content: space-between;
+  flex-wrap: wrap;
+  text-align: left;
+  font-size: min(1.5rem, 7vw);
+  min-height: max(104px, 5.4rem);
+  padding: 0.8rem 1.3rem;
+  border-width: 0.18rem;
+  box-shadow: 0 0.2rem 0 var(--ink);
+}
+.course-btn:active { box-shadow: none; transform: translateY(0.2rem); }
+.course-btn .level {
+  font-size: min(0.95rem, 4.6vw); font-weight: 600; color: var(--ink);
+  background: var(--accent-soft); border: 0.08rem solid #e6c4a4;
+  border-radius: 2rem; padding: 0.25rem 0.9rem; white-space: nowrap;
+}
+.home-foot { margin-top: auto; display: flex; justify-content: center; padding-top: 0.5rem; }
+
+@media (min-width: 800px) and (min-height: 500px) {
+  .course-list--home { grid-template-columns: repeat(3, 1fr); }
+  .course-list--home .course-btn { flex-direction: column; justify-content: center; gap: 1rem; min-height: 11rem; text-align: center; }
+  .screen--home { max-width: 60rem; justify-content: flex-start; padding-top: 2rem; gap: 2rem; }
+}
+
+/* ---- やり方を選ぶ ---- */
+.lead { font-size: 1.05rem; color: var(--ink-soft); }
+.mode-list { display: grid; gap: 1.1rem; }
+.mode-card {
+  background: var(--surface); border: 0.1rem solid var(--line);
+  border-radius: var(--radius); padding: 0.9rem; display: grid; gap: 0.7rem;
+}
+.mode-card .btn--big { justify-content: flex-start; text-align: left; gap: 0.9rem; }
+.mode-card .btn--big > span:last-child { min-width: 0; }
+.mode-card .btn--big small { display: block; font-size: 0.8rem; font-weight: 500; opacity: 0.9; margin-top: 0.15rem; }
+.mode-card .btn--big svg { width: 2.2em; height: 2.2em; }
+@media (min-width: 800px) { .mode-list { grid-template-columns: 1fr 1fr; align-items: start; } }
+
+/* ---- 課題画面 ---- */
+.progress { flex: 1 1 auto; min-width: 0; display: grid; gap: 0.3rem; }
+.progress h1 { font-size: min(1.25rem, 5.8vw); white-space: nowrap; }
+.progress h1 b { font-size: 1.3em; color: var(--accent); padding: 0 0.1em; }
+.dots { display: flex; gap: 0.25rem; }
+.dots span { flex: 1 1 0; height: 0.45rem; border-radius: 1rem; background: #d5dae3; }
+.dots span.done { background: var(--ink); }
+.dots span.now { background: var(--accent); }
+
+.stage {
+  flex: 1 1 auto; min-height: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 1.2rem; text-align: center;
+}
+.stage--scroll { overflow-y: auto; justify-content: flex-start; padding: 0.4rem 0; gap: 0.8rem; }
+.stage--scroll > :first-child { margin-top: auto; }
+.stage--scroll > :last-child { margin-bottom: auto; }
+.stage .big-text { font-size: 1.6rem; font-weight: 700; }
+.stage .listen-btn { width: min(100%, 22rem); min-height: min(42vh, 12rem); font-size: 1.7rem; border-radius: 1.2rem; }
+.stage .listen-btn svg { width: 3.2em; height: 3.2em; }
+.listening { display: grid; justify-items: center; gap: 1rem; color: var(--ink); }
+.listening svg { width: 7rem; height: 7rem; }
+.listening .wave { animation: pulse 1.2s ease-in-out infinite; transform-origin: center; }
+.listening .wave2 { animation-delay: 0.3s; }
+@keyframes pulse { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .listening .wave { animation: none; } }
+
+.hint { font-size: min(1rem, 4.6vw); font-weight: 600; text-align: center; color: var(--ink-soft); }
+
+/* カードの格子：残りの高さいっぱいに行を等分して、スクロールなしで全部見せる */
+.grid {
+  flex: 1 1 auto; min-height: 0; width: 100%;
+  display: grid; gap: 0.5rem;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  grid-auto-rows: minmax(0, 1fr);
+  --cols: 3;
+}
+.grid.n6 { --cols: 2; }
+.grid.n9, .grid.n12 { --cols: 3; }
+@media (min-aspect-ratio: 1/1) {
+  .grid.n6 { --cols: 3; }
+  .grid.n12 { --cols: 6; }
+  .grid.n9.pics { --cols: 5; }
+  .grid { max-width: 60rem; margin: 0 auto; }
+  .grid.digits { max-width: 34rem; }
+}
+@media (min-aspect-ratio: 1/1) and (max-height: 520px) {
+  .grid.n12 { --cols: 6; }
+  .grid.n6 { --cols: 6; }
+  .grid.n9.digits { --cols: 9; max-width: none; }
+}
+.card {
+  appearance: none; font: inherit; color: var(--ink);
+  position: relative; min-width: 0; min-height: 0;
+  background: var(--surface);
+  border: 0.14rem solid var(--line-strong);
+  border-radius: 0.7rem;
+  padding: 0.25rem;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.1rem;
+  cursor: pointer; touch-action: manipulation; overflow: hidden;
+  container-type: size; /* 絵の下の文字を、カードの幅に合わせる */
+}
+.card .pic { flex: 1 1 0; min-height: 0; width: 100%; display: flex; align-items: center; justify-content: center; }
+.card .pic img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.card .fallback { font-size: min(1.3rem, calc(100vw / var(--cols) / 6)); font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; }
+.card .cap {
+  flex: none; width: 100%; text-align: center; font-weight: 700; line-height: 1.2;
+  font-size: min(1.05rem, calc(((100vw - 2rem - (var(--cols) - 1) * 0.5rem) / var(--cols) - 1rem) / var(--len, 7)));
+  white-space: nowrap; overflow: hidden;
+}
+@supports (width: 1cqw) {
+  .card .cap { font-size: min(1.05rem, calc(90cqw / var(--len, 7)), 21cqh); }
+  .answer-row .card .cap.cap { font-size: min(0.85rem, calc(90cqw / var(--len, 7))); }
+}
+.card .num { font-size: min(4rem, 13vh, 18vw); font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.card.picked { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 0.16rem var(--accent); }
+.card:active:not(.picked) { background: #e9edf4; }
+.badge {
+  position: absolute; top: 0.25rem; left: 0.25rem;
+  min-width: min(1.8rem, 36px); height: min(1.8rem, 36px); border-radius: 50%;
+  background: var(--accent); color: #fff; font-weight: 700; font-size: min(1.15rem, 23px); line-height: min(1.8rem, 36px);
+  text-align: center; font-variant-numeric: tabular-nums;
+  box-shadow: 0 0 0 0.12rem #fff;
+}
+.card:not(.picked) .badge { display: none; }
+
+.actions { display: grid; gap: 0.6rem; grid-template-columns: 1fr 1fr; flex: none; }
+.actions .wide { grid-column: 1 / -1; }
+.actions .slot { font-size: min(1rem, 4.6vw); min-height: var(--tap); display: flex; align-items: center; justify-content: center; font-weight: 600; color: var(--ink-soft); }
+.actions .slot .btn { width: 100%; font-size: min(1.3rem, 6.5vw); }
+.actions--answer > .btn { white-space: nowrap; font-size: min(1rem, 4.4vw); padding: 0.4rem 0.4rem; gap: 0.3rem; }
+.screen--fixed .topbar > .btn { white-space: nowrap; font-size: min(1rem, 4.6vw); }
+@media (max-height: 520px) and (min-aspect-ratio: 1/1) {
+  .actions--answer { grid-template-columns: 1fr 1fr 1.4fr; }
+  .actions--answer .wide { grid-column: auto; }
+}
+
+/* ---- 正解・答え合わせ ---- */
+.praise { font-size: min(2.3rem, 10vw); font-weight: 700; color: var(--ink); }
+.praise-mark { width: 6rem; height: 6rem; color: var(--accent); }
+.answer-title { font-size: min(1.3rem, 6vw); font-weight: 700; flex: none; }
+.answer-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; width: 100%; max-width: 40rem; flex: none; }
+.answer-row .card { cursor: default; flex: none; border-color: var(--line); width: min(8rem, calc((100% - 1rem) / 3)); aspect-ratio: 5 / 6; }
+.answer-row.many .card { width: min(7rem, calc((100% - 1.5rem) / 4)); }
+.answer-row .card .cap { font-size: min(0.8rem, calc((100vw - 4.5rem) / 4 / (var(--len, 7) + 1.5))); }
+.answer-row .card .num { font-size: min(2.6rem, 12vw); }
+.answer-row .card .badge { display: block; min-width: min(1.4rem, 24px); height: min(1.4rem, 24px); line-height: min(1.4rem, 24px); font-size: min(0.9rem, 15px); background: var(--ink); top: 0.15rem; left: 0.15rem; }
+.answer-text {
+  font-size: min(1.5rem, 6.6vw); font-weight: 700; line-height: 1.5; flex: none;
+  background: var(--surface); border: 0.12rem solid var(--line); border-radius: var(--radius);
+  padding: 0.7rem 1rem; width: 100%; overflow-wrap: anywhere;
+}
+.answer-text--big { font-size: min(2rem, 8.5vw); }
+.answer-text--long { font-size: min(1.2rem, 5.6vw); padding: 0.5rem 0.8rem; }
+.answer-text.digits { font-size: 2.6rem; letter-spacing: 0.1em; font-variant-numeric: tabular-nums; }
+.paper-num { font-size: 1.5rem; font-weight: 700; line-height: 1.6; }
+.paper-num b { font-size: 3.2rem; color: var(--accent); vertical-align: middle; padding: 0 0.1em; line-height: 1; }
+.judge { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; flex: none; }
+.judge .btn { white-space: nowrap; padding: 0.5rem 0.3rem; font-size: min(1.25rem, 4.7vw); min-height: max(96px, 5rem); flex-direction: column; gap: 0.1rem; }
+.judge .sym { font-size: 2rem; line-height: 1; }
+
+/* ---- 結果 ---- */
+.result { text-align: center; align-items: center; justify-content: center; gap: 1.4rem; }
+.result h1 { font-size: min(1.9rem, 8.4vw); }
+.result--up h1 { font-size: min(2.3rem, 9.5vw); color: var(--accent); }
+.score { font-size: 1.5rem; font-weight: 700; background: var(--surface); border: 0.12rem solid var(--line); border-radius: var(--radius); padding: 1rem 1.4rem; }
+.score b { font-size: 3rem; color: var(--ink); padding: 0 0.1em; line-height: 1.1; }
+.next-level { font-size: 1.5rem; font-weight: 700; }
+.next-level b { font-size: 2rem; color: var(--accent); }
+.result .btns { display: grid; gap: 0.9rem; width: 100%; max-width: 26rem; }
+.confetti-canvas { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; }
+
+/* ---- 設定 ---- */
+.field { background: var(--surface); border: 0.1rem solid var(--line); border-radius: var(--radius); padding: 0.9rem; display: grid; gap: 0.7rem; }
+.field h2 { font-size: 1.1rem; }
+.seg { display: grid; gap: 0.5rem; grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr)); }
+.seg label {
+  position: relative; min-height: var(--tap); display: flex; align-items: center; justify-content: center; text-align: center;
+  border: 0.14rem solid var(--line-strong); border-radius: 0.7rem; font-weight: 700; padding: 0.3rem 0.5rem; cursor: pointer; background: var(--surface);
+}
+.seg input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.seg label.on { background: var(--ink); color: #fff; }
+.seg label.on::before { content: "✓"; margin-right: 0.3em; }
+.volume { display: flex; align-items: center; gap: 0.8rem; }
+.volume span { flex: none; font-size: 0.85rem; font-weight: 600; color: var(--ink-soft); }
+input[type="range"] { -webkit-appearance: none; appearance: none; flex: 1 1 auto; min-width: 0; height: var(--tap); background: transparent; margin: 0; touch-action: pan-y; }
+input[type="range"]::-webkit-slider-runnable-track { height: 0.7rem; border-radius: 1rem; background: #c9d0dc; }
+input[type="range"]::-moz-range-track { height: 0.7rem; border-radius: 1rem; background: #c9d0dc; }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 2.6rem; height: 2.6rem; margin-top: -0.95rem; border-radius: 50%; background: var(--ink); border: 0.2rem solid #fff; box-shadow: 0 0 0 0.1rem var(--ink); }
+input[type="range"]::-moz-range-thumb { width: 2.4rem; height: 2.4rem; border-radius: 50%; background: var(--ink); border: 0.2rem solid #fff; box-shadow: 0 0 0 0.1rem var(--ink); }
+.settings-foot { margin-top: 1.5rem; display: grid; gap: 0.6rem; justify-items: center; font-size: 0.75rem; color: var(--ink-soft); text-align: center; }
+
+/* ---- 記録 ---- */
+.tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; }
+.tab { font-size: min(1rem, 4.8vw); padding: 0.3rem 0.2rem; }
+.tab[aria-selected="true"] { background: var(--ink); color: #fff; }
+.history { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.history li {
+  background: var(--surface); border: 0.08rem solid var(--line); border-radius: 0.7rem;
+  padding: 0.6rem 0.9rem; display: grid; grid-template-columns: 1fr auto; gap: 0.1rem 0.8rem; align-items: center;
+}
+.history .when { font-size: 0.85rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.history .what { font-weight: 700; }
+.history .sc { grid-row: 1 / span 2; grid-column: 2; font-weight: 700; font-size: 1.05rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.history .sc b { font-size: 1.6rem; }
+.empty { text-align: center; color: var(--ink-soft); padding: 2rem 0; }
+.now-level { font-weight: 700; }
+
+/* ---- 確認ダイアログ ---- */
+.modal-back {
+  position: fixed; inset: 0; z-index: 100; background: rgba(12, 22, 44, 0.6);
+  display: flex; align-items: center; justify-content: center;
+  padding: max(1rem, env(safe-area-inset-top, 0px)) max(1rem, env(safe-area-inset-right, 0px)) max(1rem, env(safe-area-inset-bottom, 0px)) max(1rem, env(safe-area-inset-left, 0px));
+}
+.modal { background: var(--surface); border-radius: 1rem; padding: 1.3rem; width: min(100%, 26rem); display: grid; gap: 1.1rem; text-align: center; max-height: 100%; overflow-y: auto; }
+.modal h2 { font-size: 1.35rem; }
+.modal p { color: var(--ink-soft); }
+.modal .btns { display: grid; gap: 0.7rem; }
+
+/* 背が低めの画面では、カードに場所をゆずる */
+@media (max-height: 700px) {
+  .hint--answer { display: none; }
+  .screen--fixed { gap: 0.45rem; padding-top: max(0.5rem, env(safe-area-inset-top, 0px)); padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px)); }
+  .grid { gap: 0.35rem; }
+  .actions--answer { gap: 0.4rem; }
+  .actions--answer .btn, .actions--answer .slot { min-height: 64px; }
+  .grid .badge { min-width: 28px; height: 28px; line-height: 28px; font-size: 18px; }
+}
+
+/* 横向きスマホなど背が低いとき */
+@media (max-height: 520px) {
+  .screen--fixed { gap: 0.35rem; padding-top: max(0.4rem, env(safe-area-inset-top, 0px)); padding-bottom: max(0.4rem, env(safe-area-inset-bottom, 0px)); }
+  .stage { gap: 0.6rem; }
+  .stage .listen-btn { min-height: 0; flex-direction: row; }
+  .listening svg { width: 4rem; height: 4rem; }
+  .hint { display: none; }
+  .answer-row { max-width: none; flex-wrap: nowrap; gap: 0.35rem; }
+  .answer-row .card, .answer-row.many .card { width: auto; height: min(7rem, 25vh); flex: 0 1 auto; }
+  .answer-title { font-size: min(1.1rem, 4vw); }
+  .answer-text, .answer-text--long { font-size: min(1.1rem, 4vw); padding: 0.3rem 0.8rem; }
+  .stage--scroll { gap: 0.4rem; }
+}
+
+@media print { .app, .modal-back, .confetti-canvas { display: none !important; } }

@@ -1,0 +1,231 @@
+/* ききとりチャレンジ 訓練用紙（印刷用）
+   作成者: KENTA SHINKAWA
+   画面では隠し、印刷のときだけ用紙（#print-root）を出します。
+   クラス名はすべて ps- で始めて、画面側のCSSとぶつからないようにしています。 */
+
+#print-root {
+  display: none;
+}
+
+@page {
+  size: A4 portrait;
+  margin: 12mm;
+}
+
+@media print {
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  body > *:not(#print-root) {
+    display: none !important;
+  }
+
+  #print-root {
+    display: block !important;
+    position: static !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
+
+/* ---- 用紙 ----
+   A4（297mm）から上下の余白 24mm を引くと 273mm。
+   少し余裕を見て 268mm に固定し、必ず1枚に収めます。 */
+.ps-sheet {
+  box-sizing: border-box;
+  width: 186mm;
+  height: 268mm;
+  margin: 0 auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  color: #000;
+  background: #fff;
+  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", "YuGothic",
+    "Meiryo", "Noto Sans JP", "Noto Sans CJK JP", sans-serif;
+  font-size: 12pt;
+  line-height: 1.3;
+  page-break-inside: avoid;
+  break-inside: avoid;
+  page-break-after: avoid;
+  break-after: avoid;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.ps-sheet *,
+.ps-sheet *::before,
+.ps-sheet *::after {
+  box-sizing: border-box;
+}
+
+/* ---- 上部 ---- */
+.ps-header {
+  flex: 0 0 auto;
+  padding-bottom: 2.5mm;
+  margin-bottom: 3mm;
+  border-bottom: 0.6mm solid #000;
+}
+
+.ps-title {
+  margin: 0 0 2mm;
+  font-size: 20pt;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+}
+
+.ps-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 6mm;
+}
+
+.ps-course {
+  font-size: 16pt;
+  font-weight: 700;
+}
+
+.ps-date {
+  display: flex;
+  align-items: flex-end;
+  font-size: 14pt;
+  white-space: nowrap;
+}
+
+.ps-date-blank {
+  display: inline-block;
+  height: 8mm;
+  border-bottom: 0.3mm solid #000;
+  text-align: center;
+  line-height: 8mm;
+}
+
+.ps-date-blank--year {
+  width: 24mm;
+}
+
+.ps-date-blank--md {
+  width: 14mm;
+}
+
+.ps-date-unit {
+  padding: 0 1.5mm;
+}
+
+/* ---- 書き込み欄（10個） ---- */
+.ps-rows {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2mm;
+}
+
+.ps-row {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  align-items: stretch;
+  gap: 2mm;
+}
+
+.ps-num {
+  flex: 0 0 11mm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18pt;
+  font-weight: 700;
+}
+
+.ps-box {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  border: 0.4mm solid #000;
+  border-radius: 1.5mm;
+  overflow: hidden;
+}
+
+/* 単語・数字コース: 個数ぶんのマス（薄い点線で区切る） */
+.ps-cell {
+  flex: 1 1 0;
+  min-width: 0;
+  border-left: 0.3mm dotted #999;
+}
+
+.ps-cell:first-child {
+  border-left: 0;
+}
+
+/* 文章コース: 区切りなしの広い1行（下に薄い補助線） */
+.ps-line {
+  flex: 1 1 auto;
+  position: relative;
+}
+
+.ps-line::after {
+  content: "";
+  position: absolute;
+  left: 4mm;
+  right: 4mm;
+  bottom: 4.5mm;
+  border-bottom: 0.3mm dotted #999;
+}
+
+/* 自己採点欄 */
+.ps-mark {
+  flex: 0 0 19mm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0.3mm solid #777;
+  border-radius: 1.5mm;
+  font-size: 12pt;
+  color: #444;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+/* ---- 下部 ---- */
+.ps-footer {
+  flex: 0 0 auto;
+  margin-top: 4mm;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.ps-total {
+  display: flex;
+  align-items: flex-end;
+  font-size: 16pt;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ps-total-blank {
+  display: inline-block;
+  width: 24mm;
+  height: 11mm;
+  margin: 0 2mm;
+  border-bottom: 0.4mm solid #000;
+}
+
+.ps-credit {
+  font-size: 8pt;
+  color: #555;
+  letter-spacing: 0.05em;
+}

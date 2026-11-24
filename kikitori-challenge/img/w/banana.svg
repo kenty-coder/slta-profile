@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+<g fill="none" stroke="#000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+<g transform="translate(34 14) rotate(0) scale(0.84) translate(-26 -18)"><path d="M20 20 L31 15 Q33 28 37 34 Q50 76 100 82 L106 92 Q100 104 84 104 Q28 100 22 38 Z" fill="#fff"/></g>
+<g transform="translate(34 14) rotate(17) scale(0.84) translate(-26 -18)"><path d="M20 20 L31 15 Q33 28 37 34 Q50 76 100 82 L106 92 Q100 104 84 104 Q28 100 22 38 Z" fill="#fff"/></g>
+<g transform="translate(34 14) rotate(34) scale(0.84) translate(-26 -18)"><path d="M20 20 L31 15 Q33 28 37 34 Q50 76 100 82 L106 92 Q100 104 84 104 Q28 100 22 38 Z" fill="#fff"/><path d="M30 36 Q40 86 100 92" stroke-width="3"/></g>
+<path d="M24 20 L28 8 L40 8 L42 18" fill="#fff"/>
+</g>
+</svg>
