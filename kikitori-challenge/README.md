@@ -23,6 +23,8 @@
 AZURE_SPEECH_KEY=（Azureのキー） AZURE_SPEECH_REGION=japanwest node tools/generate-audio.mjs
 ```
 
+続けて `bash tools/trim-silence.sh` を実行し、前後の余分な無音を切りそろえます（ffmpeg が必要）。
+
 `audio/` フォルダに128個の音声ができるので、それも GitHub に入れます。
 音声ファイルが無いあいだは、端末の読み上げ機能が仮に代読します。
 
