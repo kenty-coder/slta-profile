@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="author" content="KENTA SHINKAWA">
+<meta name="robots" content="noindex">
+<title>音声の確認｜ききとりチャレンジ</title>
+<style>
+  body { font-family: "Hiragino Maru Gothic ProN", "BIZ UDPGothic", "Yu Gothic", sans-serif; margin: 0; padding: 16px; background: #f4f3ee; color: #14284b; font-size: 18px; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; } h2 { font-size: 1.15rem; margin: 28px 0 10px; border-bottom: 2px solid #14284b; padding-bottom: 4px; }
+  p { margin: 4px 0 12px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  button { font: inherit; font-weight: 700; min-height: 64px; padding: 8px; border: 2px solid #14284b; border-radius: 12px; background: #fff; color: inherit; cursor: pointer; touch-action: manipulation; }
+  button.playing { background: #ffe9d6; border-color: #b84a00; }
+  button.ng { background: #fde2e2; border-color: #b00020; }
+  button small { display: block; font-weight: 400; font-size: .7rem; color: #555; }
+  .bar { position: sticky; top: 0; background: #f4f3ee; padding: 8px 0; display: flex; gap: 10px; flex-wrap: wrap; }
+  .bar button { min-height: 52px; padding: 6px 16px; }
+</style>
+</head>
+<body>
+<h1>音声の確認</h1>
+<p>ボタンを押すと、その音声が流れます。読み方がおかしいものがあれば、ボタンの文字を控えてお知らせください。（作成：KENTA SHINKAWA）</p>
+<div class="bar"><button id="all">上から順に全部聞く</button><button id="stop">止める</button></div>
+<main id="list"></main>
+<script type="module">
+import { WORDS, DIGITS, SENTENCE_PARTS as P, PRAISES, LEVELUP_PHRASE } from './js/data.js';
+const used = new Set(P.verbs.flatMap((v) => v.objects));
+const groups = [
+  ['単語（50）', WORDS], ['数字（9）', DIGITS], ['文章：いつ', P.times], ['文章：だれが', P.subjects], ['文章：だれと', P.partners],
+  ['文章：どこで', P.places], ['文章：なにを', P.objects.filter((o) => used.has(o.id))], ['文章：どうする', P.verbs], ['ほめ言葉', [...PRAISES, LEVELUP_PHRASE]],
+];
+const audio = new Audio(); const all = []; let queue = null;
+const list = document.getElementById('list');
+function play(b) {
+  document.querySelectorAll('.playing').forEach((e) => e.classList.remove('playing'));
+  b.classList.add('playing'); audio.src = b.dataset.src + '?t=' + Date.now(); audio.play().catch(() => b.classList.add('ng'));
+  b.scrollIntoView({ block: 'nearest' });
+}
+audio.onended = () => { document.querySelectorAll('.playing').forEach((e) => e.classList.remove('playing')); if (queue && queue.length) setTimeout(() => queue && play(queue.shift()), 600); };
+audio.onerror = () => { const b = document.querySelector('.playing'); if (b) b.classList.add('ng'); };
+for (const [title, items] of groups) {
+  const h = document.createElement('h2'); h.textContent = title; const g = document.createElement('div'); g.className = 'grid';
+  for (const it of items) {
+    const b = document.createElement('button'); b.dataset.src = it.audio;
+    b.innerHTML = `${it.label}<small>${it.audio.replace('audio/', '')}</small>`;
+    b.onclick = () => { queue = null; play(b); }; g.append(b); all.push(b);
+  }
+  list.append(h, g);
+}
+document.getElementById('all').onclick = () => { queue = all.slice(); play(queue.shift()); };
+document.getElementById('stop').onclick = () => { queue = null; audio.pause(); document.querySelectorAll('.playing').forEach((e) => e.classList.remove('playing')); };
+</script>
+</body>
+</html>
