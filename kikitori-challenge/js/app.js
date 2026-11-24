@@ -183,6 +183,9 @@ async function listen() {
   const st = store.getSettings();
   try { await audio.playSequence(s.questions[s.index].items, { rate: st.rate, gapMs: st.gapMs }); } catch (e) { console.warn(e); }
   if (session !== s || token !== screenToken || s.phase !== 'playing') return;
+  // 聞き終わってから絵が出るまで、ひと呼吸（約1秒）おく
+  await new Promise((r) => setTimeout(r, 1000));
+  if (session !== s || token !== screenToken || s.phase !== 'playing') return;
   s.phase = s.afterPlay;
   renderTask(false);
 }
