@@ -1,6 +1,6 @@
 // ききとりチャレンジ 画面の動き  作成：KENTA SHINKAWA
 // 1ページの中で画面（ホーム → やり方 → 課題 → 結果、設定、記録）を切り替えます。
-// 記録は store.js、出題は questions.js、音は audio.js、用紙は print.js が担当。
+// 記録は store.js、出題は questions.js、音は audio.js、用紙は print.js、合言葉の確認は access.js が担当。
 
 import { SESSION_LENGTH, COURSES, WORDS, SENTENCE_PARTS, PRAISES, LEVELUP_PHRASE, allAudioItems } from './data.js';
 import * as store from './store.js';
@@ -8,6 +8,7 @@ import { generateSession } from './questions.js';
 import * as audio from './audio.js';
 import { printSheet } from './print.js';
 import { launchConfetti, stopConfetti } from './confetti.js';
+import * as access from './access.js';
 
 const APP_VERSION = '1.0.0';
 const AUTHOR = 'KENTA SHINKAWA';
@@ -84,10 +85,12 @@ function applySettings() {
 }
 
 // 確認ダイアログ（大きなボタンで。はい→true）
+let closeModal = null; // 開いている確認ダイアログを外から閉じるため
 function confirmDialog({ title, text, yes, no, danger = false }) {
   return new Promise((resolve) => {
     const prev = document.activeElement;
     const close = (v) => {
+      closeModal = null;
       document.removeEventListener('keydown', onKey, true);
       back.remove();
       if (prev && prev.isConnected) { try { prev.focus(); } catch (e) { /* 無視 */ } }
@@ -102,6 +105,7 @@ function confirmDialog({ title, text, yes, no, danger = false }) {
         h('div', { class: 'btns' }, noBtn, btn(yes, () => close(true), danger ? 'btn--quiet' : ''))));
     document.addEventListener('keydown', onKey, true);
     document.body.append(back);
+    closeModal = close;
     noBtn.focus();
   });
 }
@@ -485,7 +489,8 @@ function showSettings() {
         showHome();
       }, 'btn--quiet btn--small'),
       h('p', {}, `バージョン ${APP_VERSION}`),
-      h('p', {}, `作成：${AUTHOR}`))));
+      h('p', {}, `作成：${AUTHOR}`),
+      codeNote())));
 }
 
 // ---------- 記録 ----------
@@ -514,6 +519,204 @@ function showHistory(courseId) {
     tabs,
     h('p', { class: 'now-level' }, `${COURSES[courseId].label}　いま：${unitText(courseId, store.getLength(courseId))}`),
     body));
+}
+
+// ---------- 合言葉（利用の確認） ----------
+// 判断と通信は access.js。ここは画面の切り替えだけ。練習の記録（store.js）にはさわらない。
+// 文言の「|」は、せまい画面で折り返してよい位置（文字サイズ「最大」でも言葉の途中で切れないように）
+const MSG_OFFLINE = 'インターネットに|つながっていないようです。|つながる場所で、|もう一度お試しください。';
+const MSG_UNKNOWN = '合言葉がちがうようです。|もう一度お確かめください。';
+const MSG_REVOKED = 'この合言葉は|使えなくなっています。|担当者にお確かめのうえ、|合言葉を入れ直してください。';
+const MSG_CHECKING = '確かめています…';
+let gate = null;     // いま出している確認の画面: null（ふつうの画面）| 'entry' | 'stopped' | 'online' | 'checking'
+let checking = null; // 進行中の確認（重ねて問い合わせない）
+
+const phrases = (text) => String(text || '').split('|').filter(Boolean).map((t) => h('span', {}, t));
+const setMsg = (el, text) => el.replaceChildren(...phrases(text));
+
+// 担当者が電話で確認できるように、合言葉を小さく出す
+function codeNote() {
+  const rec = access.load();
+  return rec ? h('p', { class: 'access-code' }, '合言葉：', h('span', {}, rec.code)) : null;
+}
+
+// 確認の画面に切り替える前に、課題と確認ダイアログを片づける（音と紙吹雪は go が止める）
+function showGate(name, screen) {
+  session = null;
+  if (closeModal) closeModal(false);
+  gate = name;
+  go(screen);
+}
+
+function enterHome() {
+  gate = null;
+  showHome();
+}
+
+// 合言葉の入力画面（数字ボタン。キーボードは出さない）
+function showCodeEntry({ preset = '', message = '', auto = false } = {}) {
+  let digits = access.isCode(preset) ? preset : '';
+  let busy = false;
+  let retry = false; // 通信できなかったあと（同じ数字でもう一度ためす）
+  const saved = access.load();
+  const boxes = Array.from({ length: 6 }, () => h('span', { class: 'code-box' }));
+  const display = h('div', { class: 'code-display', role: 'img' }, boxes);
+  const msg = h('p', { class: 'gate-msg', role: 'status' }, phrases(message));
+  const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'].map((d) => btn(d, () => press(d), `key${d === '0' ? ' key--zero' : ''}`));
+  const del = btn('ひとつ消す', erase, 'key key--del');
+  const decide = btn('決定', submit, 'btn--accent btn--big btn--block');
+
+  function update() {
+    boxes.forEach((b, i) => {
+      b.textContent = digits[i] || '';
+      b.classList.toggle('now', !busy && i === digits.length);
+    });
+    display.setAttribute('aria-label', digits ? `入れた数字：${digits.split('').join('、')}` : 'まだ数字は入っていません');
+    keys.forEach((k) => { k.disabled = busy || digits.length >= 6; });
+    del.disabled = busy || digits.length === 0;
+    decide.disabled = busy || digits.length !== 6;
+    decide.textContent = busy ? MSG_CHECKING : retry ? 'もう一度ためす' : '決定';
+  }
+  function press(d) {
+    if (busy || digits.length >= 6) return;
+    digits += d;
+    setMsg(msg, '');
+    play('tap');
+    update();
+  }
+  function erase() {
+    if (busy || !digits) return;
+    digits = digits.slice(0, -1);
+    retry = false;
+    setMsg(msg, '');
+    update();
+  }
+  async function submit() {
+    if (busy || digits.length !== 6) return;
+    const code = digits;
+    busy = true;
+    setMsg(msg, '');
+    update();
+    const result = await access.checkCode(code);
+    if (!screen.isConnected) return;
+    busy = false;
+    if (result === 'ok') { access.save(code, 'ok'); enterHome(); return; }
+    if (result === 'stopped') { access.save(code, 'stopped'); showStopped(); return; }
+    if (result === 'unknown') {
+      digits = '';
+      retry = false;
+      setMsg(msg, MSG_UNKNOWN);
+    } else {
+      retry = true;
+      setMsg(msg, MSG_OFFLINE);
+    }
+    update();
+  }
+  // パソコンなどキーボードがある場合は、数字キーでも入れられる
+  const onKey = (e) => {
+    if (!screen.isConnected) { document.removeEventListener('keydown', onKey); return; }
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (/^[0-9]$/.test(e.key)) { e.preventDefault(); press(e.key); }
+    else if (e.key === 'Backspace') { e.preventDefault(); erase(); }
+  };
+  document.addEventListener('keydown', onKey);
+
+  const screen = h('section', { class: 'screen gate gate--entry' },
+    saved ? h('div', { class: 'topbar' }, btn([icon('back'), 'もどる'], () => { const cur = access.load(); if (cur) (cur.status === 'ok' ? enterHome : showStopped)(); }, 'btn--quiet')) : null,
+    h('h1', {}, phrases('合言葉（6けたの数字）を|入れてください')),
+    display,
+    msg,
+    h('div', { class: 'keypad' }, keys, del),
+    h('div', { class: 'gate-btns' }, decide));
+  update();
+  showGate('entry', screen);
+  if (auto && digits.length === 6) submit();
+}
+
+// 保存してある合言葉を確かめ直し、結果に合わせて画面を切り替える
+function verifySaved() {
+  if (checking) return checking;
+  const rec = access.load();
+  if (!rec) return Promise.resolve(null);
+  checking = (async () => {
+    const result = await access.checkCode(rec.code);
+    const cur = access.load();
+    if (!cur || cur.code !== rec.code) return null; // 確かめている間に、合言葉が入れ替わった
+    if (result === 'ok') {
+      access.save(cur.code, 'ok');
+      if (gate && gate !== 'entry') enterHome();
+    } else if (result === 'stopped') {
+      access.save(cur.code, 'stopped');
+      if (gate !== 'stopped' && gate !== 'entry') showStopped(); // 課題の途中でも切り替える
+    } else if (result === 'unknown') {
+      access.clear();
+      if (gate !== 'entry') showCodeEntry({ message: MSG_REVOKED });
+    } else if (cur.status === 'ok' && !access.withinGrace(cur) && gate !== 'online' && gate !== 'entry') {
+      showNeedOnline(); // 通信できないまま14日を超えた
+    }
+    return result;
+  })().finally(() => { checking = null; });
+  return checking;
+}
+
+// 「もう一度確かめる」ボタン（結果によっては verifySaved が別の画面へ切り替える）
+function recheckButton(label, msg, stillText) {
+  const b = btn(label, async () => {
+    b.disabled = true;
+    setMsg(msg, MSG_CHECKING);
+    const result = await verifySaved();
+    if (!b.isConnected) return;
+    b.disabled = false;
+    setMsg(msg, result === 'offline' ? MSG_OFFLINE : result === 'stopped' ? stillText : '');
+  }, 'btn--primary btn--big btn--block');
+  return b;
+}
+
+// 利用停止の画面
+function showStopped() {
+  const msg = h('p', { class: 'gate-msg', role: 'status' });
+  showGate('stopped', h('section', { class: 'screen gate' },
+    h('h1', {}, phrases('現在、ご利用を|停止しています。')),
+    h('p', { class: 'gate-text' }, phrases('担当者に|お問い合わせください。')),
+    msg,
+    h('div', { class: 'gate-btns' },
+      recheckButton('もう一度確かめる', msg, 'いまも ご利用を|停止しています。'),
+      btn('合言葉を入れ直す', () => showCodeEntry(), 'btn--block')),
+    codeNote()));
+}
+
+// 長いあいだ確認できていないとき
+function showNeedOnline() {
+  const msg = h('p', { class: 'gate-msg', role: 'status' });
+  showGate('online', h('section', { class: 'screen gate' },
+    h('h1', {}, phrases('インターネットに|つないで|開いてください')),
+    h('p', { class: 'gate-text' }, phrases('しばらく確認が|できていません。|インターネットに|つながる場所で、|下のボタンを押してください。')),
+    msg,
+    h('div', { class: 'gate-btns' }, recheckButton('もう一度ためす', msg, '')),
+    codeNote()));
+}
+
+function startAccess() {
+  const urlCode = access.takeCodeFromUrl(); // ?k=123456 のリンクで開いたとき
+  const rec = access.load();
+  if (urlCode && (!rec || rec.code !== urlCode)) { showCodeEntry({ preset: urlCode, auto: true }); return; }
+  if (!rec) { showCodeEntry(); return; }
+  if (rec.status === 'stopped') {
+    showStopped();
+  } else if (access.withinGrace(rec)) {
+    enterHome(); // 待たせずにホームを出し、裏で確かめる
+  } else {
+    showGate('checking', h('section', { class: 'screen gate' },
+      h('h1', {}, 'ききとりチャレンジ'), h('p', { class: 'gate-text', role: 'status' }, MSG_CHECKING)));
+  }
+  verifySaved();
+}
+
+// 開いたままのときは、画面にもどってきたときに確かめ直す
+function recheckIfStale() {
+  if (document.hidden || gate === 'entry') return;
+  const rec = access.load();
+  if (rec && access.isStale(rec)) verifySaved();
 }
 
 // ---------- 起動 ----------
@@ -566,9 +769,10 @@ function init() {
   guardGestures();
   unlockOnFirstTouch();
   // 画面を離れたら音を止める
-  document.addEventListener('visibilitychange', () => { if (document.hidden) stopAudio(); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stopAudio(); else recheckIfStale(); });
   window.addEventListener('pagehide', stopAudio);
-  showHome();
+  window.addEventListener('online', () => { if (gate === 'online') verifySaved(); });
+  startAccess();
   registerServiceWorker();
 }
 

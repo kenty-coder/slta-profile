@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="author" content="KENTA SHINKAWA">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<title>合言葉の管理｜ききとりチャレンジ</title>
+<link rel="icon" href="img/icon.svg" type="image/svg+xml">
+<style>
+  /* ききとりチャレンジ 合言葉の管理ページ  作成：KENTA SHINKAWA */
+  :root { --bg: #f5f3ee; --surface: #fff; --ink: #14284b; --ink-soft: #46546e; --line: #b9c0cd; --accent: #b84a00; --accent-soft: #fff1e3; --ok: #1d6b3a; --ok-soft: #e4f3e9; }
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-size: 18px; line-height: 1.6;
+    font-family: "Hiragino Maru Gothic ProN", "BIZ UDPGothic", "Yu Gothic UI", "Yu Gothic", "Meiryo", "Noto Sans JP", system-ui, sans-serif; }
+  main { max-width: 62rem; margin: 0 auto; padding: 20px 16px 48px; }
+  header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-bottom: 16px; }
+  header h1 { font-size: 1.5rem; margin: 0; flex: 1 1 auto; line-height: 1.3; }
+  header h1 small { display: block; font-size: .8rem; font-weight: 500; color: var(--ink-soft); }
+  h2 { font-size: 1.2rem; margin: 0 0 10px; line-height: 1.3; }
+  p { margin: 0 0 10px; }
+  [hidden] { display: none !important; }
+  .panel { background: var(--surface); border: 2px solid var(--line); border-radius: 14px; padding: 18px; margin-bottom: 18px; }
+  .narrow { max-width: 32rem; margin-left: auto; margin-right: auto; }
+  label { display: block; font-weight: 700; margin: 12px 0 4px; }
+  input[type="text"], input[type="password"] { font: inherit; color: inherit; width: 100%; min-height: 52px; padding: 8px 12px; border: 2px solid var(--ink); border-radius: 10px; background: #fff; }
+  input:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid #1a73e8; outline-offset: 2px; }
+  .check { display: flex; align-items: center; gap: 8px; font-weight: 500; margin: 10px 0; cursor: pointer; }
+  .check input { width: 22px; height: 22px; }
+  button { font: inherit; font-weight: 700; color: var(--ink); background: #fff; border: 2px solid var(--ink); border-radius: 10px; min-height: 48px; padding: 6px 16px; cursor: pointer; touch-action: manipulation; }
+  button:active { background: #e9edf4; }
+  button.primary { background: var(--ink); color: #fff; }
+  button.warn { border-color: var(--accent); color: var(--accent); }
+  button.quiet { border-color: var(--line); font-weight: 500; }
+  button.small { min-height: 40px; padding: 4px 12px; font-size: .9rem; }
+  button[disabled] { opacity: .45; cursor: default; }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .row > input { flex: 1 1 14rem; width: auto; }
+  .note { font-size: .85rem; color: var(--ink-soft); }
+  .msg { font-weight: 700; color: var(--accent); margin: 10px 0 0; }
+  .msg:empty { display: none; }
+  #notice { background: var(--accent-soft); border: 2px solid var(--accent); border-radius: 10px; padding: 10px 14px; font-weight: 700; margin-bottom: 16px; }
+  #notice:empty { display: none; }
+  .summary { font-size: 1.15rem; font-weight: 700; }
+  .summary b { font-size: 1.6rem; padding: 0 .15em; }
+  #issued { border-color: var(--accent); background: var(--accent-soft); }
+  .bigcode { font-size: clamp(2.4rem, 12vw, 3.6rem); font-weight: 700; letter-spacing: .12em; line-height: 1.2; font-variant-numeric: tabular-nums; margin: 4px 0 10px; }
+  .link { background: #fff; border: 2px solid var(--line); border-radius: 10px; padding: 8px 12px; overflow-wrap: anywhere; word-break: break-all; font-size: .95rem; margin-bottom: 10px; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: .85rem; color: var(--ink-soft); padding: 6px 10px; border-bottom: 2px solid var(--ink); white-space: nowrap; }
+  td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  td.label { font-weight: 700; overflow-wrap: anywhere; min-width: 9rem; }
+  td.label .none { font-weight: 500; color: var(--ink-soft); }
+  td.code { font-size: 1.35rem; font-weight: 700; letter-spacing: .08em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.date { font-size: .9rem; white-space: nowrap; }
+  td.ops .row { gap: 6px; flex-wrap: nowrap; }
+  td.ops button { white-space: nowrap; }
+  .badge { display: inline-block; border-radius: 99px; padding: 2px 12px; font-size: .9rem; font-weight: 700; white-space: nowrap; background: var(--ok-soft); color: var(--ok); border: 1.5px solid var(--ok); }
+  .badge.off { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+  tr.off td.code, tr.off td.label { color: var(--ink-soft); }
+  .edit { display: grid; gap: 6px; }
+  .empty { color: var(--ink-soft); text-align: center; padding: 24px 0; margin: 0; }
+  dialog { border: 0; border-radius: 16px; padding: 22px; width: min(92vw, 28rem); color: var(--ink); font: inherit; }
+  dialog::backdrop { background: rgba(12, 22, 44, .6); }
+  dialog p { font-size: 1.15rem; font-weight: 700; margin-bottom: 18px; }
+  dialog .row { justify-content: flex-end; }
+  footer { font-size: .8rem; color: var(--ink-soft); text-align: center; margin-top: 28px; }
+  footer a { color: inherit; }
+
+  /* せまい画面では、表を1件ずつのカードにする */
+  @media (max-width: 1100px) {
+    thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    table, tbody, tr, td { display: block; width: 100%; }
+    tr { border: 2px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 12px; display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; }
+    td { border: 0; padding: 0; min-width: 0; }
+    td.label { grid-column: 1 / -1; font-size: 1.1rem; }
+    td.date { grid-column: 1 / -1; white-space: normal; }
+    td.date::before { content: attr(data-th) "："; color: var(--ink-soft); }
+    td.ops { grid-column: 1 / -1; margin-top: 6px; }
+    td.ops .row { flex-wrap: wrap; }
+    td.ops button { flex: 1 1 auto; }
+  }
+</style>
+</head>
+<body>
+<!-- ききとりチャレンジ 合言葉の管理  作成：KENTA SHINKAWA -->
+<main>
+  <header>
+    <h1>合言葉の管理<small>ききとりチャレンジ</small></h1>
+    <button type="button" id="logout" class="quiet" hidden>ログアウト</button>
+  </header>
+
+  <p id="notice" role="alert"></p>
+
+  <section id="v-loading" class="panel narrow"><p style="margin:0">準備しています…</p></section>
+
+  <section id="v-error" class="panel narrow" hidden>
+    <h2>つながりませんでした</h2>
+    <p>インターネットにつながっているか確かめて、もう一度お試しください。</p>
+    <button type="button" id="boot-retry" class="primary">もう一度ためす</button>
+  </section>
+
+  <section id="v-setup" class="panel narrow" hidden>
+    <h2>管理用パスワードを決めてください（10文字以上）</h2>
+    <p class="note">はじめに1回だけ行います。このパスワードは、この管理ページを開くたびに使います。忘れないように、紙などに控えておいてください。</p>
+    <form id="setup-form" autocomplete="off">
+      <label for="setup-1">新しいパスワード</label>
+      <input type="password" id="setup-1" autocomplete="new-password" required>
+      <label for="setup-2">もう一度、同じパスワード</label>
+      <input type="password" id="setup-2" autocomplete="new-password" required>
+      <label class="check"><input type="checkbox" data-show="setup-1 setup-2">入力した文字を見えるようにする</label>
+      <button type="submit" class="primary">このパスワードに決める</button>
+      <p class="msg" id="setup-msg" role="alert"></p>
+    </form>
+  </section>
+
+  <section id="v-login" class="panel narrow" hidden>
+    <h2>管理用パスワードを入れてください</h2>
+    <form id="login-form">
+      <label for="login-pass">パスワード</label>
+      <input type="password" id="login-pass" autocomplete="current-password" required>
+      <label class="check"><input type="checkbox" data-show="login-pass">入力した文字を見えるようにする</label>
+      <button type="submit" class="primary">ログイン</button>
+      <p class="msg" id="login-msg" role="alert"></p>
+    </form>
+  </section>
+
+  <div id="v-main" hidden>
+    <section class="panel">
+      <h2>新しい合言葉を発行</h2>
+      <form id="add-form" autocomplete="off">
+        <label for="add-label" style="margin-top:0">メモ（だれに渡す合言葉か）</label>
+        <div class="row">
+          <input type="text" id="add-label" maxlength="60" placeholder="例：T.K さん／3番">
+          <button type="submit" class="primary">新しい合言葉を発行</button>
+        </div>
+        <p class="note" style="margin:8px 0 0">メモには本名ではなく、イニシャルや番号など、ご自身だけが分かる書き方をおすすめします</p>
+        <p class="msg" id="add-msg" role="alert"></p>
+      </form>
+    </section>
+
+    <section id="issued" class="panel" hidden tabindex="-1">
+      <h2>合言葉を発行しました</h2>
+      <p id="issued-label" style="margin:0"></p>
+      <p class="bigcode" id="issued-code"></p>
+      <div class="row" style="margin-bottom:14px"><button type="button" id="copy-code">合言葉をコピー</button></div>
+      <p style="font-weight:700;margin-bottom:6px">このリンクを開くだけでも使えます</p>
+      <p class="link" id="issued-link"></p>
+      <div class="row">
+        <button type="button" id="copy-link">リンクをコピー</button>
+        <button type="button" id="issued-close" class="quiet">とじる</button>
+        <span class="note" id="copy-msg" role="status"></span>
+      </div>
+      <p class="note" style="margin:10px 0 0">リンクをメールなどで送るか、合言葉（6けたの数字）を伝えてください。合言葉は下の一覧でいつでも確認できます。</p>
+    </section>
+
+    <section class="panel">
+      <div class="row" style="justify-content:space-between;margin-bottom:10px">
+        <h2 style="margin:0">合言葉の一覧</h2>
+        <button type="button" id="reload" class="quiet small">最新の状態にする</button>
+      </div>
+      <p class="summary" id="summary"></p>
+      <table>
+        <thead><tr><th>メモ</th><th>合言葉</th><th>状態</th><th>発行日</th><th>最後に使った日</th><th>操作</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <p class="empty" id="empty" hidden>まだ合言葉はありません。上の「新しい合言葉を発行」から作れます。</p>
+      <p class="note" id="list-msg" role="status" style="margin:10px 0 0"></p>
+    </section>
+  </div>
+
+  <dialog id="confirm">
+    <p id="confirm-text"></p>
+    <div class="row">
+      <button type="button" id="confirm-no" class="primary">やめる</button>
+      <button type="button" id="confirm-yes" class="warn">停止する</button>
+    </div>
+  </dialog>
+
+  <footer>作成：KENTA SHINKAWA　／　<a href="./">アプリを開く</a></footer>
+</main>
+
+<script>
+// ききとりチャレンジ 合言葉の管理  作成：KENTA SHINKAWA
+(function () {
+  'use strict';
+  var API_URL = 'https://zmajpgygyqucfzdklybq.supabase.co';
+  var API_KEY = 'sb_publishable_R-wtpsYgIM7FgHIms-42dg_yjt1VHjO'; // 公開してよいキー
+  var PASS_KEY = 'kikitori-admin-pass'; // sessionStorage（タブを閉じたら消える）
+  var MIN_PASS = 10;
+  var MSG = {
+    network: '通信できませんでした。インターネットにつながっているか確かめて、もう一度お試しください。',
+    server: 'うまくいきませんでした。少し時間をおいて、もう一度お試しください。',
+    auth: 'パスワードがちがいます',
+  };
+
+  var $ = function (id) { return document.getElementById(id); };
+  var views = ['v-loading', 'v-error', 'v-setup', 'v-login', 'v-main'];
+  var pass = '';
+  var items = [];
+  var editingId = null;
+
+  function show(view) {
+    views.forEach(function (v) { $(v).hidden = v !== view; });
+    $('logout').hidden = view !== 'v-main';
+    $('notice').textContent = '';
+  }
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function button(text, cls, onclick) {
+    var b = el('button', cls, text);
+    b.type = 'button';
+    b.addEventListener('click', onclick);
+    return b;
+  }
+
+  // ---- 通信 ----
+  function fail(kind) { var e = new Error(kind); e.kind = kind; return e; }
+  async function rpc(name, args) {
+    var res;
+    try {
+      res = await fetch(API_URL + '/rest/v1/rpc/' + name, {
+        method: 'POST',
+        headers: { apikey: API_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify(args || {}),
+        cache: 'no-store',
+      });
+    } catch (e) { throw fail('network'); }
+    var body = null;
+    try { body = await res.json(); } catch (e) { /* 本文なし */ }
+    if (!res.ok) {
+      if ((body && body.code === '42501') || res.status === 401 || res.status === 403) throw fail('auth');
+      throw fail('server');
+    }
+    return body;
+  }
+  function messageOf(e) { return MSG[e && e.kind] || MSG.server; }
+
+  // ボタンを押している間は、二重に押せないようにする
+  async function busy(target, fn) {
+    var buttons = target ? Array.prototype.slice.call(target.querySelectorAll ? target.querySelectorAll('button') : []) : [];
+    if (target && target.tagName === 'BUTTON') buttons.push(target);
+    buttons = buttons.filter(function (b) { return !b.disabled; });
+    buttons.forEach(function (b) { b.disabled = true; });
+    try { return await fn(); } finally { buttons.forEach(function (b) { b.disabled = false; }); }
+  }
+
+  // ---- パスワードの保持（このタブを開いている間だけ）----
+  function loadPass() { try { return sessionStorage.getItem(PASS_KEY) || ''; } catch (e) { return ''; } }
+  function keepPass(p) { pass = p; try { sessionStorage.setItem(PASS_KEY, p); } catch (e) { /* 保存できなくても続ける */ } }
+  function forgetPass() { pass = ''; try { sessionStorage.removeItem(PASS_KEY); } catch (e) { /* 無視 */ } }
+
+  function showLogin(message) {
+    show('v-login');
+    $('login-pass').value = '';
+    $('login-msg').textContent = message || '';
+    $('login-pass').focus();
+  }
+  function logout(message) {
+    forgetPass();
+    items = [];
+    editingId = null;
+    $('rows').replaceChildren();
+    $('issued').hidden = true;
+    showLogin(message);
+  }
+
+  // ---- 起動 ----
+  async function boot() {
+    show('v-loading');
+    var saved = loadPass();
+    try {
+      if (saved) {
+        try {
+          items = await rpc('admin_list', { p_pass: saved });
+          pass = saved;
+          showMain();
+          return;
+        } catch (e) {
+          if (e.kind !== 'auth') throw e;
+          forgetPass();
+        }
+      }
+      var ready = await rpc('admin_is_setup', {});
+      if (ready) showLogin('');
+      else { show('v-setup'); $('setup-1').focus(); }
+    } catch (e) {
+      show('v-error');
+    }
+  }
+  $('boot-retry').addEventListener('click', boot);
+
+  // ---- 初回：パスワードを決める ----
+  $('setup-form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var a = $('setup-1').value; var b = $('setup-2').value; var msg = $('setup-msg');
+    msg.textContent = '';
+    if (a.length < MIN_PASS) { msg.textContent = 'パスワードは10文字以上にしてください（いま ' + a.length + '文字です）'; return; }
+    if (a !== b) { msg.textContent = '2つのパスワードがちがっています。同じものを入れてください'; return; }
+    busy(ev.target, async function () {
+      try {
+        var ok = await rpc('admin_setup', { p_new_pass: a });
+        if (ok !== true) { showLogin('パスワードはすでに決められています。決めてあるパスワードを入れてください'); return; }
+        items = await rpc('admin_list', { p_pass: a });
+        keepPass(a);
+        $('setup-1').value = ''; $('setup-2').value = '';
+        showMain();
+      } catch (e) { msg.textContent = messageOf(e); }
+    });
+  });
+
+  // ---- ログイン ----
+  $('login-form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var p = $('login-pass').value; var msg = $('login-msg');
+    msg.textContent = '';
+    if (!p) return;
+    busy(ev.target, async function () {
+      try {
+        items = await rpc('admin_list', { p_pass: p });
+        keepPass(p);
+        $('login-pass').value = '';
+        showMain();
+      } catch (e) { msg.textContent = messageOf(e); }
+    });
+  });
+  $('logout').addEventListener('click', function () { logout(''); });
+
+  Array.prototype.forEach.call(document.querySelectorAll('input[data-show]'), function (box) {
+    box.checked = false;
+    box.addEventListener('change', function () {
+      box.dataset.show.split(' ').forEach(function (id) { $(id).type = box.checked ? 'text' : 'password'; });
+    });
+  });
+
+  // ---- 一覧 ----
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function dateText(iso, withTime) {
+    var d = new Date(iso);
+    if (!iso || isNaN(d.getTime())) return '';
+    var s = d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日';
+    return withTime ? s + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) : s;
+  }
+  function linkOf(code) { return new URL('./', location.href).href + '?k=' + code; }
+  function nameOf(it) { return (it.label || '').trim(); }
+
+  function showMain() {
+    show('v-main');
+    render();
+  }
+
+  function render() {
+    if (!Array.isArray(items)) items = [];
+    items.sort(function (a, b) { return String(b.created_at || '').localeCompare(String(a.created_at || '')); });
+    var on = items.filter(function (it) { return it.active; }).length;
+    var sum = $('summary');
+    sum.replaceChildren('利用中 ', el('b', '', String(on)), ' 人 ／ 停止中 ', el('b', '', String(items.length - on)), ' 人');
+    $('empty').hidden = items.length > 0;
+    $('rows').replaceChildren.apply($('rows'), items.map(rowOf));
+  }
+
+  function rowOf(it) {
+    var tr = el('tr', it.active ? '' : 'off');
+    var name = nameOf(it);
+
+    var tdLabel = el('td', 'label');
+    if (editingId === it.id) {
+      var input = el('input'); input.type = 'text'; input.maxLength = 60; input.value = name;
+      input.setAttribute('aria-label', 'メモ');
+      var save = button('保存する', 'primary small', function () { saveLabel(it, input.value, tdLabel); });
+      var cancel = button('やめる', 'quiet small', function () { editingId = null; render(); });
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); save.click(); }
+        if (e.key === 'Escape') { e.preventDefault(); cancel.click(); }
+      });
+      var box = el('div', 'edit'); var r = el('div', 'row'); r.append(save, cancel); box.append(input, r);
+      tdLabel.append(box);
+      setTimeout(function () { input.focus(); input.select(); }, 0);
+    } else {
+      tdLabel.append(name ? document.createTextNode(name) : el('span', 'none', '（メモなし）'));
+    }
+
+    var tdCode = el('td', 'code', it.code);
+    var tdState = el('td', 'state');
+    tdState.append(el('span', it.active ? 'badge' : 'badge off', it.active ? '利用中' : '停止中'));
+    var tdMade = el('td', 'date', dateText(it.created_at, false)); tdMade.dataset.th = '発行日';
+    var tdSeen = el('td', 'date', it.last_seen_at ? dateText(it.last_seen_at, true) : 'まだ使っていません'); tdSeen.dataset.th = '最後に使った日';
+
+    var tdOps = el('td', 'ops'); var ops = el('div', 'row');
+    ops.append(
+      it.active
+        ? button('停止する', 'warn small', function (ev) { stop(it, ev.currentTarget); })
+        : button('再開する', 'primary small', function (ev) { setActive(it, true, ev.currentTarget); }),
+      button('メモを変える', 'quiet small', function () { editingId = it.id; render(); }),
+      button('リンクをコピー', 'quiet small', function () { copy(linkOf(it.code), $('list-msg'), 'リンクをコピーしました（' + (name || it.code) + '）'); }));
+    tdOps.append(ops);
+
+    tr.append(tdLabel, tdCode, tdState, tdMade, tdSeen, tdOps);
+    return tr;
+  }
+
+  // 操作のあとの共通処理。パスワードが変わっていたらログインし直し
+  function onError(e, where) {
+    if (e && e.kind === 'auth') { logout('パスワードがちがいます。もう一度入れてください'); return; }
+    (where || $('notice')).textContent = messageOf(e);
+  }
+  async function reload() {
+    items = await rpc('admin_list', { p_pass: pass });
+    render();
+  }
+  $('reload').addEventListener('click', function (ev) {
+    $('notice').textContent = ''; $('list-msg').textContent = '';
+    busy(ev.currentTarget, async function () {
+      try { await reload(); $('list-msg').textContent = '最新の状態にしました'; } catch (e) { onError(e); }
+    });
+  });
+
+  // ---- 発行 ----
+  $('add-form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var label = $('add-label').value.trim(); var msg = $('add-msg');
+    msg.textContent = ''; $('notice').textContent = '';
+    busy(ev.target, async function () {
+      try {
+        var code = await rpc('admin_add', { p_pass: pass, p_label: label });
+        if (typeof code !== 'string' && typeof code !== 'number') throw fail('server');
+        code = String(code);
+        $('add-label').value = '';
+        $('issued-label').textContent = label ? 'メモ：' + label : '';
+        $('issued-code').textContent = code;
+        $('issued-link').textContent = linkOf(code);
+        $('copy-msg').textContent = '';
+        $('issued').hidden = false;
+        $('issued').focus();
+        try { await reload(); } catch (e) { onError(e); }
+      } catch (e) { onError(e, msg); }
+    });
+  });
+  $('issued-close').addEventListener('click', function () { $('issued').hidden = true; });
+  $('copy-code').addEventListener('click', function () { copy($('issued-code').textContent, $('copy-msg'), '合言葉をコピーしました'); });
+  $('copy-link').addEventListener('click', function () { copy($('issued-link').textContent, $('copy-msg'), 'リンクをコピーしました'); });
+
+  async function copy(text, msgEl, done) {
+    var ok = false;
+    try { await navigator.clipboard.writeText(text); ok = true; } catch (e) {
+      try { // 古いブラウザ向け
+        var ta = document.createElement('textarea');
+        ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.append(ta); ta.select();
+        ok = document.execCommand('copy');
+        ta.remove();
+      } catch (e2) { ok = false; }
+    }
+    msgEl.textContent = ok ? done : 'コピーできませんでした。文字をなぞって選び、コピーしてください';
+  }
+
+  // ---- 停止・再開・メモ ----
+  function confirmStop(text) {
+    var dlg = $('confirm');
+    $('confirm-text').textContent = text;
+    if (typeof dlg.showModal !== 'function') return Promise.resolve(window.confirm(text));
+    return new Promise(function (resolve) {
+      var done = function (v) {
+        $('confirm-yes').onclick = null; $('confirm-no').onclick = null; dlg.oncancel = null;
+        if (dlg.open) dlg.close();
+        resolve(v);
+      };
+      $('confirm-yes').onclick = function () { done(true); };
+      $('confirm-no').onclick = function () { done(false); };
+      dlg.oncancel = function (e) { e.preventDefault(); done(false); };
+      dlg.showModal();
+      $('confirm-no').focus();
+    });
+  }
+  async function stop(it, btn) {
+    var name = nameOf(it);
+    var ok = await confirmStop((name ? name + 'さん' : '合言葉 ' + it.code) + 'の利用を停止します。よろしいですか？');
+    if (ok) setActive(it, false, btn);
+  }
+  function setActive(it, active, btn) {
+    $('notice').textContent = ''; $('list-msg').textContent = '';
+    return busy(btn, async function () {
+      try {
+        await rpc('admin_update', { p_pass: pass, p_id: it.id, p_active: active, p_label: null });
+        await reload();
+        $('list-msg').textContent = (nameOf(it) || it.code) + (active ? ' の利用を再開しました' : ' の利用を停止しました');
+      } catch (e) { onError(e); }
+    });
+  }
+  function saveLabel(it, value, cell) {
+    $('notice').textContent = ''; $('list-msg').textContent = '';
+    return busy(cell, async function () {
+      try {
+        await rpc('admin_update', { p_pass: pass, p_id: it.id, p_active: null, p_label: value.trim() });
+        editingId = null;
+        await reload();
+        $('list-msg').textContent = 'メモを保存しました';
+      } catch (e) { onError(e); }
+    });
+  }
+
+  boot();
+})();
+</script>
+</body>
+</html>

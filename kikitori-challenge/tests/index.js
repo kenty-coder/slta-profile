@@ -4,3 +4,4 @@
 // 作成者: KENTA SHINKAWA
 import('./store.test.mjs');
 import('./questions.test.mjs');
+import('./access.test.mjs');

@@ -14,7 +14,7 @@ const NETWORK_TIMEOUT_MS = 5000;
 const CORE = [
   './', 'index.html', 'manifest.webmanifest',
   'css/style.css', 'css/print.css',
-  'js/app.js', 'js/data.js', 'js/store.js', 'js/questions.js', 'js/audio.js', 'js/print.js', 'js/confetti.js',
+  'js/app.js', 'js/data.js', 'js/store.js', 'js/questions.js', 'js/audio.js', 'js/print.js', 'js/confetti.js', 'js/access.js',
   'img/icon.svg', 'img/icon-192.png',
 ];
 
@@ -114,6 +114,7 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
+  // 別のサーバーあて（合言葉の確認など）は、保存も横取りもせず、そのまま通す
   if (url.origin !== self.location.origin) return;
   if (isShell(req, url)) { event.respondWith(networkFirst(req)); return; }
   if (req.headers.has('range')) { event.respondWith(ranged(req, event)); return; }
