@@ -58,6 +58,9 @@ const SAY_OVERRIDES = {
   'audio/w/megane.mp3': 'メガネ',  // 眼鏡 →「がんきょう」と読まれないように
   'audio/s/wo_megane.mp3': 'メガネを',
   'audio/s/wo_tsuki.mp3': 'つきを',
+  'audio/w/hashi.mp3': '箸',        // かなの「はし」は「わし」と読まれるため漢字で
+  'audio/s/wo_hashi.mp3': '箸を',
+  'audio/d/5.mp3': '五',            // かなの「ご」は正しく読まれないため漢数字で
 };
 
 // 種類ごとの話し方（rate: 話す速さ、style: 感情表現）
